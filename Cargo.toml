@@ -1,0 +1,11 @@
+[package]
+name = "algar"
+description = "Algebric structures, higher-kinded types and other category theory bad ideas"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+keywords = ["category theory", "functional programming", "monad", "monad transformes"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
