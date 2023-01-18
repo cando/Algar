@@ -12,7 +12,7 @@ pub enum TurtleError {
 
 pub fn r#move(turtle: Turtle, distance: &str) -> Result<Turtle, TurtleError> {
     Apply::lift_a2(
-        Result::of(turtle),
+        Result::<Turtle, TurtleError>::of(turtle),
         validate_distance(distance),
         Turtle::r#move,
     )
@@ -20,23 +20,31 @@ pub fn r#move(turtle: Turtle, distance: &str) -> Result<Turtle, TurtleError> {
 
 pub fn r#move2(turtle: Turtle, distance: &str) -> Result<((), Turtle), TurtleError> {
     Apply::lift_a2(
-        Result::of(turtle),
+        Result::<Turtle, TurtleError>::of(turtle),
         validate_distance(distance),
         Turtle::r#move2,
     )
 }
 
 pub fn turn(turtle: Turtle, angle: &str) -> Result<Turtle, TurtleError> {
-    Apply::lift_a2(Result::of(turtle), validate_angle(angle), Turtle::turn)
+    Apply::lift_a2(
+        Result::<Turtle, TurtleError>::of(turtle),
+        validate_angle(angle),
+        Turtle::turn,
+    )
 }
 
 pub fn turn2(turtle: Turtle, angle: &str) -> Result<((), Turtle), TurtleError> {
-    Apply::lift_a2(Result::of(turtle), validate_angle(angle), Turtle::turn2)
+    Apply::lift_a2(
+        Result::<Turtle, TurtleError>::of(turtle),
+        validate_angle(angle),
+        Turtle::turn2,
+    )
 }
 
 pub fn set_pen_color(turtle: Turtle, color: &str) -> Result<Turtle, TurtleError> {
     Apply::lift_a2(
-        Result::of(turtle),
+        Result::<Turtle, TurtleError>::of(turtle),
         validate_pen_color(color),
         Turtle::set_pen_color,
     )
@@ -44,7 +52,7 @@ pub fn set_pen_color(turtle: Turtle, color: &str) -> Result<Turtle, TurtleError>
 
 pub fn set_pen_state(turtle: Turtle, state: &str) -> Result<Turtle, TurtleError> {
     Apply::lift_a2(
-        Result::of(turtle),
+        Result::<Turtle, TurtleError>::of(turtle),
         validate_pen_state(state),
         Turtle::set_pen_state,
     )

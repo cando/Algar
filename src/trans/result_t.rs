@@ -5,50 +5,46 @@ pub struct ResultT<M> {
 }
 
 impl<'a, M> ResultT<M> {
-    pub fn new(runner: M) -> Self {
+    pub fn new(runner: M) -> Self
+    where
+        M: Monad<'a>,
+    {
         Self { runner }
     }
 
-    pub fn execute(self) -> M {
+    pub fn execute(self) -> M
+    where
+        M: Monad<'a>,
+    {
         self.runner
     }
 
-    pub fn lift<E>(
-        base: M,
-    ) -> ResultT<<M as Monad<'a>>::Wrapped<Result<<M as Monad<'a>>::Unwrapped, E>>>
+    pub fn lift<A: 'a, E: 'a>(base: M) -> ResultT<M::Wrapped<Result<A, E>>>
     where
-        M: Monad<'a>,
+        M: Monad<'a, Unwrapped = A>,
     {
         ResultT {
             runner: base.bind(|a| M::of(Result::Ok(a))),
         }
     }
-}
 
-impl<'a, M: 'a + Monad<'a, Unwrapped = Result<A, E>>, A: 'a, E: 'a> Monad<'a> for ResultT<M> {
-    type Unwrapped = A;
-
-    type Wrapped<C: 'a> = ResultT<M::Wrapped<Result<C, E>>>;
-
-    fn bind<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
+    pub fn bind<F, A: 'a, B: 'a, E: 'a>(self, f: F) -> ResultT<M::Wrapped<Result<B, E>>>
     where
-        F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
+        M: Monad<'a, Unwrapped = Result<A, E>>,
+        F: FnOnce(A) -> ResultT<M::Wrapped<Result<B, E>>> + 'a,
     {
-        ResultT::new(self.runner.bind(|r| match r {
-            Ok(ok) => f(ok).runner,
-            Err(err) => M::of(Result::Err(err)),
-        }))
-    }
-
-    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
-        ResultT::new(M::of(Result::Ok(value)))
+        ResultT {
+            runner: (self.runner.bind(|r| match r {
+                Ok(ok) => f(ok).runner,
+                Err(err) => M::of(Result::Err(err)),
+            })),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::Monad;
-    use crate::ResultT;
+    use crate::trans::ResultT;
 
     #[test]
     fn result_t_bind() {
@@ -70,7 +66,7 @@ mod test {
     #[test]
     fn result_t_lift() {
         let a = Option::Some(42);
-        let lifted = ResultT::lift::<String>(a);
+        let lifted = ResultT::lift::<i32, String>(a);
         // lifted type is ResultT<Option<Result<i32, String>>>!
 
         assert_eq!(
@@ -83,7 +79,7 @@ mod test {
 
         // But if the value we lift is None, we get...
         let b: Option<i32> = None;
-        let lifted2 = ResultT::lift::<String>(b);
+        let lifted2 = ResultT::lift::<i32, String>(b);
 
         assert!(lifted2
             .bind(|a| ResultT::new(Option::Some(Ok(a + 1))))

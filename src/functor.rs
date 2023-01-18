@@ -1,17 +1,17 @@
-pub trait Functor {
+pub trait Functor<'a> {
     type Unwrapped;
-    type Wrapped<B>;
+    type Wrapped<B: 'a>: Functor<'a>;
 
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B;
+        F: FnOnce(Self::Unwrapped) -> B + 'a;
 }
 
-impl<A> Functor for Option<A> {
+impl<'a, A> Functor<'a> for Option<A> {
     type Unwrapped = A;
-    type Wrapped<B> = Option<B>;
+    type Wrapped<B: 'a> = Option<B>;
 
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B,
     {
@@ -22,11 +22,11 @@ impl<A> Functor for Option<A> {
     }
 }
 
-impl<A, E> Functor for Result<A, E> {
+impl<'a, A, E> Functor<'a> for Result<A, E> {
     type Unwrapped = A;
-    type Wrapped<B> = Result<B, E>;
+    type Wrapped<B: 'a> = Result<B, E>;
 
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B,
     {

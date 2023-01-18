@@ -7,6 +7,9 @@ pub use crate::apply::Apply;
 mod applicative;
 pub use crate::applicative::Applicative;
 
+mod bind;
+pub use crate::bind::Bind;
+
 mod monad;
 pub use crate::monad::Monad;
 
@@ -24,4 +27,4 @@ pub use crate::monoid::Monoid;
 
 mod trans;
 pub use crate::trans::ResultT;
-pub use crate::trans::StateT;
+// pub use crate::trans::StateT;

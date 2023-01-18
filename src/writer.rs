@@ -1,4 +1,4 @@
-use crate::{Monad, Monoid};
+use crate::{Applicative, Apply, Bind, Functor, Monoid};
 
 pub struct Writer<A, W: Monoid> {
     runner: (A, W),
@@ -20,11 +20,47 @@ impl<A, W: Monoid> Writer<A, W> {
     }
 }
 
-impl<'a, A, W: Monoid> Monad<'a> for Writer<A, W> {
+impl<'a, A, W: Monoid> Functor<'a> for Writer<A, W> {
     type Unwrapped = A;
 
-    type Wrapped<T: 'a> = Writer<T, W>;
+    type Wrapped<B: 'a> = Writer<B, W>;
 
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnOnce(Self::Unwrapped) -> B,
+    {
+        let (a, l) = self.runner;
+        Writer::new(f(a), l)
+    }
+}
+
+impl<'a, A, W: Monoid> Apply<'a> for Writer<A, W> {
+    fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
+    where
+        F: FnOnce(Self::Unwrapped) -> B + 'a,
+    {
+        let (a, l1) = self.runner;
+        let (f, l2) = f.runner;
+        Writer::new(f(a), l1.mappend(l2))
+    }
+
+    fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
+    where
+        F: FnOnce(Self::Unwrapped, B) -> C,
+    {
+        let (a1, l1) = self.runner;
+        let (a2, l2) = b.runner;
+        Writer::new(f(a1, a2), l1.mappend(l2))
+    }
+}
+
+impl<'a, A: 'a, W: Monoid> Applicative<'a> for Writer<A, W> {
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+        Writer::new(value, W::mempty())
+    }
+}
+
+impl<'a, A: 'a, W: Monoid> Bind<'a> for Writer<A, W> {
     fn bind<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
@@ -34,16 +70,36 @@ impl<'a, A, W: Monoid> Monad<'a> for Writer<A, W> {
 
         Writer::new(a2, w1.mappend(w2))
     }
-
-    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
-        Writer::new(value, W::mempty())
-    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::Monad;
+    use crate::functor::Functor;
+    use crate::Apply;
+    use crate::Bind;
     use crate::Writer;
+
+    #[test]
+    fn option_functor() {
+        let a = Writer::new(1, String::from("FOO"));
+        let b = a.fmap(|x| format!("{}", x));
+        assert_eq!(b.runner, ("1".to_string(), "FOO".to_string()));
+    }
+
+    #[test]
+    fn writer_ap() {
+        let a = Writer::new(1, String::from("FOO"));
+        let b = a.ap(Writer::new(|x| format!("{}", x), String::from("BAR")));
+        assert_eq!(b.runner, ("1".to_string(), "FOOBAR".to_string()));
+    }
+
+    #[test]
+    fn writer_lifta2() {
+        let a = Writer::new(1, String::from("FOO"));
+        let b = Writer::new(1, String::from("BAR"));
+        let res = a.lift_a2(b, |u1, u2| u1 + u2);
+        assert_eq!(res.runner, (2, "FOOBAR".to_string()));
+    }
 
     #[test]
     fn writer_bind() {

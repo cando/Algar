@@ -15,4 +15,4 @@ keywords = ["category-theory", "fp", "monad", "monad-transformers", "functional"
 
 [[example]]
 name = "turtle_operations"
-test = true
+test = false

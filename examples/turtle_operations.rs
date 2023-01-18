@@ -6,7 +6,7 @@ fn main() {}
 
 #[cfg(test)]
 mod test {
-    use algar::{m, Monad, Monoid, ResultT, State, StateT, Writer};
+    use algar::{m, Bind, Monad, Monoid, ResultT, State, StateT, Writer};
 
     use crate::model::{
         turtle::{Angle, Distance, PenColor, PenState, Position, Turtle},
