@@ -37,5 +37,3 @@ Walking through those resources probably won't change your code overnight. Some 
 "[general abstract nonsense](https://en.wikipedia.org/wiki/Abstract_nonsense)"
 for a reason. That said, it does provide a nice framework for thinking about
 these abstract ideas, and is a recommended pursuit for all that are curious.
-
-
