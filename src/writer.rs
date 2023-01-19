@@ -1,4 +1,4 @@
-use crate::{Applicative, Apply, Bind, Functor, Monoid};
+use crate::{Applicative, Apply, Functor, Monad, Monoid};
 
 pub struct Writer<A, W: Monoid> {
     runner: (A, W),
@@ -60,7 +60,11 @@ impl<'a, A: 'a, W: Monoid> Applicative<'a> for Writer<A, W> {
     }
 }
 
-impl<'a, A: 'a, W: Monoid> Bind<'a> for Writer<A, W> {
+impl<'a, A: 'a, W: Monoid> Monad<'a> for Writer<A, W> {
+    type Unwrapped = A;
+
+    type Wrapped<B: 'a> = Writer<B, W>;
+
     fn bind<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
@@ -70,13 +74,17 @@ impl<'a, A: 'a, W: Monoid> Bind<'a> for Writer<A, W> {
 
         Writer::new(a2, w1.mappend(w2))
     }
+
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+        Writer::new(value, W::mempty())
+    }
 }
 
 #[cfg(test)]
 mod test {
     use crate::functor::Functor;
     use crate::Apply;
-    use crate::Bind;
+    use crate::Monad;
     use crate::Writer;
 
     #[test]

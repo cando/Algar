@@ -4,6 +4,34 @@ pub struct StateT<'a, S, M> {
     pub runner: Box<dyn 'a + FnOnce(S) -> M>,
 }
 
+impl<'a, A: 'a, S: 'a, M: 'a + Monad<'a, Unwrapped = (A, S)>> Monad<'a> for StateT<'a, S, M> {
+    type Unwrapped = A;
+    type Wrapped<B: 'a> = StateT<'a, S, M::Wrapped<(B, S)>>;
+
+    fn bind<F, B>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
+    {
+        StateT {
+            runner: Box::new(move |s| {
+                let m = (self.runner)(s);
+
+                let chain_fun = |v| {
+                    let (a1, s1) = v;
+                    (f(a1).runner)(s1)
+                };
+                m.bind(chain_fun)
+            }),
+        }
+    }
+
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+        StateT {
+            runner: Box::new(move |s| M::of((value, s))),
+        }
+    }
+}
+
 impl<'a, S: 'a, M: 'a + Monad<'a>> StateT<'a, S, M> {
     pub fn new<F>(runner: F) -> Self
     where
@@ -18,36 +46,19 @@ impl<'a, S: 'a, M: 'a + Monad<'a>> StateT<'a, S, M> {
         (self.runner)(state)
     }
 
-    pub fn lift<A: 'a>(base: M) -> StateT<'a, S, M::Wrapped<(A, S)>>
+    pub fn lift<N, B>(base: N) -> StateT<'a, S, <N as Monad<'a>>::Wrapped<(B, S)>>
     where
-        M: Monad<'a, Unwrapped = A>,
+        N: Monad<'a, Unwrapped = B> + 'a,
     {
         StateT {
-            runner: Box::new(|s| base.bind(|a| M::of((a, s)))),
-        }
-    }
-
-    pub fn bind<F, A: 'a, B: 'a>(self, f: F) -> StateT<'a, S, M::Wrapped<(B, S)>>
-    where
-        M: Monad<'a, Unwrapped = (A, S)>,
-        F: FnOnce(A) -> StateT<'a, S, M::Wrapped<(B, S)>> + 'a,
-    {
-        StateT {
-            runner: Box::new(move |s| {
-                let m = (self.runner)(s);
-
-                let chain_fun = |v| {
-                    let (a1, s1) = v;
-                    (f(a1).runner)(s1)
-                };
-                m.bind(chain_fun)
-            }),
+            runner: Box::new(|s| base.bind(|a| N::of((a, s)))),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::Monad;
     use crate::StateT;
 
     #[test]

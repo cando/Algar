@@ -1,4 +1,4 @@
-use crate::{Applicative, Apply, Bind, Functor};
+use crate::{Applicative, Apply, Functor, Monad};
 
 pub struct State<'a, S, A> {
     pub runner: Box<dyn 'a + FnOnce(S) -> (A, S)>,
@@ -71,7 +71,11 @@ impl<'a, S: 'a, A: 'a> Applicative<'a> for State<'a, S, A> {
     }
 }
 
-impl<'a, S: 'a, A: 'a> Bind<'a> for State<'a, S, A> {
+impl<'a, S: 'a, A: 'a> Monad<'a> for State<'a, S, A> {
+    type Unwrapped = A;
+
+    type Wrapped<B: 'a> = State<'a, S, B>;
+
     fn bind<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
@@ -84,13 +88,17 @@ impl<'a, S: 'a, A: 'a> Bind<'a> for State<'a, S, A> {
             }),
         }
     }
+
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+        State::new(|s| (value, s))
+    }
 }
 
 #[cfg(test)]
 mod test {
     use crate::Apply;
-    use crate::Bind;
     use crate::Functor;
+    use crate::Monad;
     use crate::State;
 
     #[test]

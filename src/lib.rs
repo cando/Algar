@@ -7,9 +7,6 @@ pub use crate::apply::Apply;
 mod applicative;
 pub use crate::applicative::Applicative;
 
-mod bind;
-pub use crate::bind::Bind;
-
 mod monad;
 pub use crate::monad::Monad;
 
