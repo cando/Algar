@@ -1,6 +1,6 @@
 pub trait Functor<'a> {
     type Unwrapped;
-    type Wrapped<B: 'a>: Functor<'a>;
+    type Wrapped<B: 'a>;
 
     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where

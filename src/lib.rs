@@ -27,4 +27,4 @@ pub use crate::monoid::Monoid;
 
 mod trans;
 pub use crate::trans::ResultT;
-// pub use crate::trans::StateT;
+pub use crate::trans::StateT;
