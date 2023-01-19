@@ -17,7 +17,7 @@ The [`Witchcraft`](https://github.com/witchcrafters/witchcraft) Elixir library i
 [`Fp-core.rs`](https://github.com/JasonShin/fp-core.rs), and [`higher`](https://github.com/bodil/higher),s
 have been invaluable resources to help me to port category theory concepts in Rust. 
 
-[The Fantasy Land Spec](https://github.com/fantasyland/fantasy-land) is a spec for
+[`The Fantasy Land Spec`](https://github.com/fantasyland/fantasy-land) is a spec for
 projects such as this one, but targeted at Javascript. It does not come with its
 own implementation, but provides a [helpful chart](https://github.com/fantasyland/fantasy-land/raw/master/figures/dependencies.png)
 of class hierarchies.
@@ -34,7 +34,7 @@ I heavely recommend:
 - [A Pragmatic Introduction to Category Theory—Daniela Sfregola](https://www.youtube.com/watch?v=Ss149MsZluI)
 
 Walking through those resources probably won't change your code overnight. Some people call it
-"[general abstract nonsense](https://en.wikipedia.org/wiki/Abstract_nonsense)"
+[general abstract nonsense](https://en.wikipedia.org/wiki/Abstract_nonsense)
 for a reason. That said, it does provide a nice framework for thinking about
 these abstract ideas, and is a recommended pursuit for all that are curious.
 
