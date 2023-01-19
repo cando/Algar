@@ -1,17 +1,26 @@
-pub trait Functor {
+/// The `Functor` trait represents the mathematical functor: a mapping between categories in the context of category theory.
+/// In practice a functor represents a type that can be mapped over.
+///
+/// A type f is a Functor if it provides a function fmap which,
+/// given any types a and b lets you apply any function from (a -> b) to turn an f a into an f b, preserving the structure of f.
+pub trait Functor<'a> {
+    /// The inner type which will be mapped over
     type Unwrapped;
-    type Wrapped<B>;
 
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    /// Target of the fmap operation. Like `Self`, but has a different wrapped up value underneath.
+    type Wrapped<B: 'a>;
+
+    /// fmap is used to apply a function of type (a -> b) to a value of type f a, where f is a functor, to produce a value of type f b.
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B;
+        F: FnOnce(Self::Unwrapped) -> B + 'a;
 }
 
-impl<A> Functor for Option<A> {
+impl<'a, A> Functor<'a> for Option<A> {
     type Unwrapped = A;
-    type Wrapped<B> = Option<B>;
+    type Wrapped<B: 'a> = Option<B>;
 
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B,
     {
@@ -22,11 +31,11 @@ impl<A> Functor for Option<A> {
     }
 }
 
-impl<A, E> Functor for Result<A, E> {
+impl<'a, A, E> Functor<'a> for Result<A, E> {
     type Unwrapped = A;
-    type Wrapped<B> = Result<B, E>;
+    type Wrapped<B: 'a> = Result<B, E>;
 
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B,
     {

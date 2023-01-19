@@ -1,13 +1,22 @@
 use crate::Functor;
 
-pub trait Apply: Functor {
-    fn ap<F, B>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
+/// An extension of `Functor`, `Apply` provides a way to _apply_ arguments
+/// to functions when both are wrapped in the same kind of container. This can be
+/// seen as running function application "in a context".
+///
+/// For a nice, illustrated introduction,
+/// see [Functors, Applicatives, And Monads In Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html).
+///
+pub trait Apply<'a>: Functor<'a> {
+    /// Apply a function wrapped in a context to to a value wrapped in the same type of context
+    fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B;
+        F: FnOnce(Self::Unwrapped) -> B + 'a;
 
-    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
+    /// Lift an (unwrapped) binary function and apply to two wrapped values
+    fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
     where
-        F: FnOnce(Self::Unwrapped, B) -> C;
+        F: FnOnce(Self::Unwrapped, B) -> C + 'a;
 
     // Since Rust doesnt'have (auto)currying, we are forced to manually implement
     // lift_a3, lift_a4, etc.
@@ -18,15 +27,15 @@ pub trait Apply: Functor {
     // Some(f(a, b))
 }
 
-impl<A> Apply for Option<A> {
-    fn ap<F, B>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
+impl<'a, A> Apply<'a> for Option<A> {
+    fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B,
+        F: FnOnce(Self::Unwrapped) -> B + 'a,
     {
         self.and_then(|x| f.fmap(|z| z(x)))
     }
 
-    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
+    fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
     where
         F: FnOnce(Self::Unwrapped, B) -> C,
     {
@@ -34,15 +43,15 @@ impl<A> Apply for Option<A> {
     }
 }
 
-impl<A, E> Apply for Result<A, E> {
-    fn ap<F, B>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
+impl<'a, A, E> Apply<'a> for Result<A, E> {
+    fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B,
+        F: FnOnce(Self::Unwrapped) -> B + 'a,
     {
         self.and_then(|x| f.fmap(|z| z(x)))
     }
 
-    fn lift_a2<F, B, C>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
+    fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
     where
         F: FnOnce(Self::Unwrapped, B) -> C,
     {

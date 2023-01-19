@@ -1,6 +1,8 @@
 use crate::Monad;
 
+/// A `State` transformer monad parameterized by the state type (S) and the inner monad (M)
 pub struct StateT<'a, S, M> {
+    /// The "stateful" function which return a Monad whose Unwrapped value is the tuple (_, S)
     pub runner: Box<dyn 'a + FnOnce(S) -> M>,
 }
 

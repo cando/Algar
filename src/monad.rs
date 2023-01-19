@@ -1,11 +1,24 @@
+/// `Monad` provides a way to link actions, and a way
+/// to bring plain values into the correct context (`Applicative`).
+
+/// `Monad` should "derive" from `Applicative` and add only the `bind` operation, but due to the limits of the Rust type system
+/// (Higher-kinded Types are missing), we should define a dedicated trait to be able to (partially) support Monad Transformers and avoid
+/// some type madness
 pub trait Monad<'a> {
     type Unwrapped;
     type Wrapped<T: 'a>;
 
+    /// Sequentially compose actions, piping values through successive function chains.
+    ///
+    /// The applied linking function must be unary and return data in the same
+    /// type of container as the input. The chain function essentially "unwraps"
+    /// a contained value, applies a linking function that returns
+    /// the initial (wrapped) type, and collects them into a flat(ter) structure.
     fn bind<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a;
 
+    /// Lift a value into a context
     fn of<T: 'a>(value: T) -> Self::Wrapped<T>;
 }
 
@@ -41,34 +54,37 @@ impl<'a, A, E> Monad<'a> for Result<A, E> {
     }
 }
 
+// Took from: https://docs.rs/do-notation/latest/do_notation/
+
+/// Provides the Haskell monadic syntactic sugar `do`.
 #[macro_export]
 macro_rules! m {
 
-  // let-binding
-  (let $p:pat = $e:expr ; $($r:tt)*) => {{
-    let $p = $e;
-    m!($($r)*)
-  }};
+// let-binding
+(let $p:pat = $e:expr ; $($r:tt)*) => {{
+  let $p = $e;
+  m!($($r)*)
+}};
 
-  // const-bind
-  (_ <- $x:expr ; $($r:tt)*) => {
-    $x.bind(move |_| { m!($($r)*) })
-  };
+// const-bind
+(_ <- $x:expr ; $($r:tt)*) => {
+  $x.bind(move |_| { m!($($r)*) })
+};
 
-  // bind
-  ($binding:ident <- $x:expr ; $($r:tt)*) => {
-    $x.bind(move |$binding| { m!($($r)*) })
-  };
+// bind
+($binding:ident <- $x:expr ; $($r:tt)*) => {
+  $x.bind(move |$binding| { m!($($r)*) })
+};
 
-  // const-bind
-  ($e:expr ; $($a:tt)*) => {
-      $e.bind(move |_| m!($($a)*))
-  };
+// const-bind
+($e:expr ; $($a:tt)*) => {
+    $e.bind(move |_| m!($($a)*))
+};
 
-  // pure
-  ($a:expr) => {
-    $a
-  }
+// pure
+($a:expr) => {
+  $a
+}
 }
 
 #[cfg(test)]

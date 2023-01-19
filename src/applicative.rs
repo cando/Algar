@@ -1,17 +1,20 @@
 use crate::Apply;
 
-pub trait Applicative: Apply {
-    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped>;
+/// `Applicative` extends `Apply` with the ability to lift value into a
+/// particular data type or "context".
+pub trait Applicative<'a>: Apply<'a> {
+    /// Lift a value into a context
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T>;
 }
 
-impl<A> Applicative for Option<A> {
-    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped> {
+impl<'a, A: 'a> Applicative<'a> for Option<A> {
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
         Some(value)
     }
 }
 
-impl<A, E> Applicative for Result<A, E> {
-    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped> {
+impl<'a, A: 'a, E> Applicative<'a> for Result<A, E> {
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
         Result::Ok(value)
     }
 }
@@ -22,13 +25,13 @@ mod test {
 
     #[test]
     fn option_of() {
-        let a: Option<i32> = Option::of(31337);
+        let a = Option::<i32>::of(31337);
         assert_eq!(a, Option::Some(31337));
     }
 
     #[test]
     fn result_of() {
-        let a: Result<i32, ()> = Result::of(31337);
+        let a = Result::<i32, ()>::of(31337);
         assert_eq!(a, Result::Ok(31337));
     }
 }
