@@ -1,7 +1,16 @@
+/// The `Functor` trait represents the mathematical functor: a mapping between categories in the context of category theory.
+/// In practice a functor represents a type that can be mapped over.
+///
+/// A type f is a Functor if it provides a function fmap which,
+/// given any types a and b lets you apply any function from (a -> b) to turn an f a into an f b, preserving the structure of f.
 pub trait Functor<'a> {
+    /// The inner type which will be mapped over
     type Unwrapped;
+
+    /// Target of the fmap operation. Like `Self`, but has a different wrapped up value underneath.
     type Wrapped<B: 'a>;
 
+    /// fmap is used to apply a function of type (a -> b) to a value of type f a, where f is a functor, to produce a value of type f b.
     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B + 'a;

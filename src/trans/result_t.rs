@@ -1,6 +1,8 @@
 use crate::Monad;
 
+/// A `Result` (`Either`) transformer monad parameterized by the inner monad (M)
 pub struct ResultT<M> {
+    /// The inner monad whose Unwrapped value is Result<_,_>
     pub runner: M,
 }
 

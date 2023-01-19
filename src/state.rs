@@ -1,10 +1,21 @@
 use crate::{Applicative, Apply, Functor, Monad};
 
+/// `State` describes a wrapped function that can be used to pass around some
+/// "hidden" pure state.
+/// This has numerous applications, but the primary advantage is purity. The state
+/// gets passed around with the value, and the monadic DSL helps it feel more
+/// natural than passing everything around by hand.
+/// Simulates a global mutable state by means of composition of pure functions.
+
+/// This module is inspired by the paper Functional Programming with Overloading and Higher-Order Polymorphism,
+/// Mark P Jones <http://web.cecs.pdx.edu/~mpj/> Advanced School of Functional Programming, 1995.
 pub struct State<'a, S, A> {
+    /// The (apparently) "stateful" function
     pub runner: Box<dyn 'a + FnOnce(S) -> (A, S)>,
 }
 
 impl<'a, S: 'a, A: 'a> State<'a, S, A> {
+    /// Constructs a new `State` by passing in the function which uses and updates the state
     pub fn new<F>(runner: F) -> Self
     where
         F: FnOnce(S) -> (A, S) + 'a,
@@ -14,6 +25,8 @@ impl<'a, S: 'a, A: 'a> State<'a, S, A> {
         }
     }
 
+    /// Run a `State` by passing in some initial state to actualy run the enclosed
+    /// state runner.
     pub fn execute(self, state: S) -> (A, S) {
         (self.runner)(state)
     }

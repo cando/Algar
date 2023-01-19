@@ -1,10 +1,19 @@
 use crate::Functor;
 
+/// An extension of `Functor`, `Apply` provides a way to _apply_ arguments
+/// to functions when both are wrapped in the same kind of container. This can be
+/// seen as running function application "in a context".
+///
+/// For a nice, illustrated introduction,
+/// see [Functors, Applicatives, And Monads In Pictures](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html).
+///
 pub trait Apply<'a>: Functor<'a> {
+    /// Apply a function wrapped in a context to to a value wrapped in the same type of context
     fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B + 'a;
 
+    /// Lift an (unwrapped) binary function and apply to two wrapped values
     fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
     where
         F: FnOnce(Self::Unwrapped, B) -> C + 'a;

@@ -1,6 +1,9 @@
 use crate::Apply;
 
+/// `Applicative` extends `Apply` with the ability to lift value into a
+/// particular data type or "context".
 pub trait Applicative<'a>: Apply<'a> {
+    /// Lift a value into a context
     fn of<T: 'a>(value: T) -> Self::Wrapped<T>;
 }
 

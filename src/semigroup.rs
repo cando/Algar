@@ -12,6 +12,7 @@
 /// takes a second argument of type `B` and returns a third type `C`, whereas a
 /// `Semigroup` only deals with a single type `A`.
 pub trait Semigroup {
+    /// The associative operation of the `Semigroup` which takes two values and them together
     fn mappend(self, other: Self) -> Self;
 }
 

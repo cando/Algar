@@ -1,20 +1,33 @@
 use crate::{Applicative, Apply, Functor, Monad, Monoid};
 
+/// `Writer` helps capture the pattern of writing to a pure log or accumulated
+/// value, handling the bookkeeping for you..
+/// This is often used for loggers, but could be anything as long as the hidden value
+/// is a `Monoid`.
+///
+/// There are many applications of `Writer`s, but as an illustrative point,
+/// one could use it for logging across processes and time, since the log
+/// is carried around with the result in a pure fashion. The monadic DSL
+/// helps make using these feel more naturasl.
 pub struct Writer<A, W: Monoid> {
+    /// The enclosed value and log of the `Writer`.
     runner: (A, W),
 }
 
 impl<A, W: Monoid> Writer<A, W> {
+    /// Construct a `Writer` struct from a starting value and log.
     pub fn new(value: A, log: W) -> Self {
         Self {
             runner: (value, log),
         }
     }
 
+    /// Construct a `Writer` struct from a log.
     pub fn tell(log: W) -> Writer<(), W> {
         Writer { runner: ((), log) }
     }
 
+    /// Extract the enclosed value and log from an `Writer`.
     pub fn execute(self) -> (A, W) {
         self.runner
     }
