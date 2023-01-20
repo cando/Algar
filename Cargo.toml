@@ -7,7 +7,7 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/cando/Algar"
 homepage = "https://github.com/cando/Algar"
-keywords = ["category-theory", "fp", "monad", "monad-transformers", "functional"]
+keywords = ["category-theory", "fp", "monad", "monads" , "monad-transformers", "functional"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
