@@ -2,6 +2,7 @@ extern crate algar;
 
 pub mod model;
 
+/// Examples inspired by [Thirteen ways of looking at a turtle](https://fsharpforfunandprofit.com/posts/13-ways-of-looking-at-a-turtle/)
 fn main() {}
 
 #[cfg(test)]

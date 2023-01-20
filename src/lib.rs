@@ -2,6 +2,16 @@
 //!
 //! I wrote this for two reasons: first, mainly as a playground for learning Category Theory and Rust, second to see if it was even possible to
 //! implement such general abstract nonsense in Rust.
+
+mod semigroupoid;
+pub use crate::semigroupoid::Semigroupoid;
+
+mod semigroup;
+pub use crate::semigroup::Semigroup;
+
+mod monoid;
+pub use crate::monoid::Monoid;
+
 mod functor;
 pub use crate::functor::Functor;
 
@@ -19,12 +29,6 @@ pub use crate::state::State;
 
 mod writer;
 pub use crate::writer::Writer;
-
-mod semigroup;
-pub use crate::semigroup::Semigroup;
-
-mod monoid;
-pub use crate::monoid::Monoid;
 
 mod trans;
 pub use crate::trans::ResultT;

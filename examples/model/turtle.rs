@@ -66,6 +66,7 @@ impl Turtle {
         }
     }
 
+    /// The same as `r#move` but returns a tuple ((), Turtle)
     pub fn r#move2(self, d: Distance) -> ((), Self) {
         (
             (),
@@ -83,6 +84,7 @@ impl Turtle {
         }
     }
 
+    /// The same as `turn` but returns a tuple ((), Turtle)
     pub fn turn2(self, angle: Angle) -> ((), Self) {
         (
             (),
