@@ -22,7 +22,7 @@ where
 
 impl<A> Semigroupoid for Option<A>
 where
-    A: Semigroup,
+    A: Semigroup + Clone,
 {
     fn compose(self, other: Self) -> Self {
         self.lift_a2(other, |a, b| a.mappend(b))

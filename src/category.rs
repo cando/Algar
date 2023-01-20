@@ -9,7 +9,7 @@ pub trait Category: Semigroupoid {
     fn identity(self) -> Self;
 }
 
-impl<A: Semigroup> Category for Option<A> {
+impl<A: Semigroup + Clone> Category for Option<A> {
     fn identity(self) -> Self {
         self
     }

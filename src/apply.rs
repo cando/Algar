@@ -27,12 +27,12 @@ pub trait Apply<'a>: Functor<'a> {
     // Some(f(a, b))
 }
 
-impl<'a, A> Apply<'a> for Option<A> {
+impl<'a, A: Clone> Apply<'a> for Option<A> {
     fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B + 'a,
     {
-        self.and_then(|x| f.fmap(|z| z(x)))
+        self.and_then(|x| f.fmap(|z| z(x.clone())))
     }
 
     fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
@@ -43,12 +43,12 @@ impl<'a, A> Apply<'a> for Option<A> {
     }
 }
 
-impl<'a, A, E> Apply<'a> for Result<A, E> {
+impl<'a, A: Clone, E> Apply<'a> for Result<A, E> {
     fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B + 'a,
     {
-        self.and_then(|x| f.fmap(|z| z(x)))
+        self.and_then(|x| f.fmap(|z| z(x.clone())))
     }
 
     fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>

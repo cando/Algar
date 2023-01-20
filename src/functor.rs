@@ -13,7 +13,7 @@ pub trait Functor<'a> {
     /// fmap is used to apply a function of type (a -> b) to a value of type f a, where f is a functor, to produce a value of type f b.
     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B + 'a;
+        F: Fn(Self::Unwrapped) -> B + 'a;
 }
 
 impl<'a, A> Functor<'a> for Option<A> {
@@ -22,7 +22,7 @@ impl<'a, A> Functor<'a> for Option<A> {
 
     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B,
+        F: Fn(Self::Unwrapped) -> B,
     {
         match self {
             Some(a) => Some(f(a)),
@@ -37,7 +37,7 @@ impl<'a, A, E> Functor<'a> for Result<A, E> {
 
     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
-        F: FnOnce(Self::Unwrapped) -> B,
+        F: Fn(Self::Unwrapped) -> B,
     {
         match self {
             Result::Ok(a) => Result::Ok(f(a)),
@@ -46,21 +46,17 @@ impl<'a, A, E> Functor<'a> for Result<A, E> {
     }
 }
 
-// https://varkor.github.io/blog/2019/03/28/idiomatic-monads-in-rust.html
-// we need generic associated trait to have a unique abstraction which covers Vecs too.
+impl<'a, A> Functor<'a> for Vec<A> {
+    type Unwrapped = A;
+    type Wrapped<B: 'a> = Vec<B>;
 
-// impl<A> Functor for Vec<A> {
-//     type Unwrapped = A;
-
-//     type Wrapped<B> = Vec<B>;
-
-//     fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
-//     where
-//         F: Fn(Self::Unwrapped) -> B,
-//     {
-//         self.into_iter().map(f).collect()
-//     }
-// }
+    fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: Fn(Self::Unwrapped) -> B,
+    {
+        self.into_iter().map(f).collect()
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -78,5 +74,12 @@ mod test {
         let a: Result<i32, ()> = Result::Ok(31337);
         let b = a.fmap(|x| format!("{}", x));
         assert_eq!(b, Result::Ok("31337".to_string()));
+    }
+
+    #[test]
+    fn vec_functor() {
+        let a = vec![1, 2, 3];
+        let b = a.fmap(|x| format!("{}", x));
+        assert_eq!(vec!["1", "2", "3"], b);
     }
 }

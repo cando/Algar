@@ -1,18 +1,18 @@
 use std::f32::consts::PI;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum PenState {
     Up,
     Down,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum PenColor {
     Black,
     Red,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Position(f32, f32);
 
 impl Position {
@@ -21,7 +21,7 @@ impl Position {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Angle(f32);
 
 impl Angle {
@@ -30,7 +30,7 @@ impl Angle {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Distance(f32);
 
 impl Distance {
@@ -39,7 +39,7 @@ impl Distance {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Turtle {
     pub position: Position,
     pub angle: Angle,
