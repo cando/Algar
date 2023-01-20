@@ -11,7 +11,7 @@
 [docs-badge]: https://img.shields.io/docsrs/algar?color=green
 [docs-url]: https://docs.rs/algar/
 
-### Algebric structures, higher-kinded types and other category theory bad ideas.
+Algebric structures, higher-kinded types and other category theory bad ideas.
 
 <br />
 
