@@ -6,6 +6,9 @@
 mod semigroupoid;
 pub use crate::semigroupoid::Semigroupoid;
 
+mod category;
+pub use crate::category::Category;
+
 mod semigroup;
 pub use crate::semigroup::Semigroup;
 
