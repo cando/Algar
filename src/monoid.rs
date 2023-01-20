@@ -8,9 +8,16 @@ pub trait Monoid: Semigroup {
     /// The identity element/morphism of the monoid
     fn mempty() -> Self;
 }
+
 impl Monoid for String {
     fn mempty() -> Self {
         String::from("")
+    }
+}
+
+impl Monoid for i32 {
+    fn mempty() -> Self {
+        0
     }
 }
 

@@ -22,6 +22,12 @@ impl Semigroup for String {
     }
 }
 
+impl Semigroup for i32 {
+    fn mappend(self, other: Self) -> Self {
+        self + other
+    }
+}
+
 impl<A> Semigroup for Vec<A> {
     fn mappend(mut self, other: Self) -> Self {
         self.extend(other);

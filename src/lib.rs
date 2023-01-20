@@ -27,6 +27,12 @@ pub use crate::applicative::Applicative;
 mod monad;
 pub use crate::monad::Monad;
 
+mod foldable;
+pub use crate::foldable::Foldable;
+
+mod traversable;
+pub use crate::traversable::Traversable;
+
 mod state;
 pub use crate::state::State;
 

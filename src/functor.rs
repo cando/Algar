@@ -62,24 +62,6 @@ impl<'a, A, E> Functor<'a> for Result<A, E> {
 //     }
 // }
 
-//
-// EVIL FUNCTOR IMPLEMENTATION
-//
-// impl<A> Functor for Option<A> {
-//     type Unwrapped = A;
-//     type Wrapped<B> = Result<B, ()>;
-
-//     fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
-//     where
-//         F: FnOnce(Self::Unwrapped) -> B,
-//     {
-//         match self {
-//             Some(a) => Result::Ok(f(a)),
-//             None => Result::Err(()),
-//         }
-//     }
-// }
-
 #[cfg(test)]
 mod test {
     use crate::Functor;

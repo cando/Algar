@@ -14,9 +14,8 @@ impl<A: Semigroup> Category for Option<A> {
         self
     }
 }
-
+#[cfg(test)]
 mod tests {
-    #[allow(unused_imports)]
     use crate::Category;
 
     #[test]
