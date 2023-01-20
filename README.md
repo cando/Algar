@@ -1,5 +1,19 @@
 # Algar
-Algebric structures, higher-kinded types and other category theory bad ideas.
+
+[![Crates.io][crates-badge]][crates-url]
+[![Build][actions-badge]][actions-url]
+[![docs-badge]][docs-url]
+
+[crates-badge]: https://img.shields.io/crates/v/algar.svg
+[crates-url]: https://crates.io/crates/algar
+[actions-badge]: https://img.shields.io/github/actions/workflow/status/cando/Algar/rust.yml
+[actions-url]: https://github.com/cando/Algar/actions?query=branch%3Amain
+[docs-badge]: https://img.shields.io/docsrs/algar?color=green
+[docs-url]: https://docs.rs/algar/
+
+### Algebric structures, higher-kinded types and other category theory bad ideas.
+
+<br />
 
 ## Why?
 
