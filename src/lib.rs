@@ -1,7 +1,4 @@
-//! Algebraic structures, higher-kinded types and other category theory bad ideas.
-//!
-//! I wrote this for two reasons: first, mainly as a playground for learning Category Theory and Rust, second to see if it was even possible to
-//! implement such general abstract nonsense in Rust.
+#![doc = include_str!("../README.md")]
 
 mod semigroupoid;
 pub use crate::semigroupoid::Semigroupoid;

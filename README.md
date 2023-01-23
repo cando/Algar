@@ -13,6 +13,8 @@
 
 Algebric structures, higher-kinded types and other category theory bad ideas.
 
+Yes, you'll have generalized functors, applicatives, monads, traversable and much more in Rust at your fingertips. 
+But no, they're not as ergonomic and beautiful as in Haskell, mainly because of the lack of higher-kinded types in Rust type-system.
 
 ## Why?
 
