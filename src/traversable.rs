@@ -62,7 +62,7 @@ impl<'a, A: Monoid> Traversable<'a> for Vec<A> {
         W: Applicative<'a, Wrapped<B> = Self::Unwrapped>,
         Self::Unwrapped: Applicative<'a> + 'a + Copy,
     {
-        self.traverse::<_, B, W>(|a| *a)
+        self.traverse::<_, _, W>(|a| *a)
     }
 }
 
