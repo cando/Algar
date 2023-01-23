@@ -10,19 +10,35 @@ pub trait Traversable<'a>: Functor<'a> {
     ///
     /// Haskell signature
     /// traverse  :: Applicative f => (a -> f b) -> t a -> f (t b)
-    fn traverse<F, B: 'a, W>(self, f: F) -> W::Wrapped<Vec<B>>
+    fn traverse<F, B: 'a, W>(self, f: F) -> W::Wrapped<Self::Wrapped<B>>
     where
         F: Fn(&Self::Unwrapped) -> W::Wrapped<B>,
-        W: Applicative<'a, Unwrapped = Vec<B>, Wrapped<Vec<B>> = W> + 'a,
-        <W as Functor<'a>>::Wrapped<Vec<B>>: Applicative<'a> + Monoid;
+        W: Applicative<'a, Unwrapped = Self::Wrapped<B>, Wrapped<Self::Wrapped<B>> = W>
+            + 'a
+            + Monoid,
+        <W as Functor<'a>>::Wrapped<Self::Wrapped<B>>: Applicative<'a>,
+        <Self as Functor<'a>>::Wrapped<B>: 'a;
+
+    // ///
+    // /// Haskell signature
+    // /// sequenceA :: Applicative f => t (f a) -> f (t a)
+    // fn sequenceA<B: 'a, W>(self) -> W::Wrapped<Self::Wrapped<B>>
+    // where
+    //     W: Applicative<'a, Unwrapped = Vec<B>, Wrapped<Vec<B>> = W> + 'a,
+    //     <W as Functor<'a>>::Wrapped<Vec<B>>: Applicative<'a> + Monoid,
+    //     <W as Functor<'a>>::Wrapped<B>: FromIterator<<W as Functor<'a>>::Wrapped<B>>,
+    //     Self::Unwrapped: IntoIterator<Item = W::Wrapped<B>> + Copy;
 }
 
 impl<'a, A: Monoid> Traversable<'a> for Vec<A> {
-    fn traverse<F, B: 'a, W>(self, f: F) -> W::Wrapped<Vec<B>>
+    fn traverse<F, B: 'a, W>(self, f: F) -> W::Wrapped<Self::Wrapped<B>>
     where
         F: Fn(&Self::Unwrapped) -> W::Wrapped<B>,
-        W: Applicative<'a, Unwrapped = Vec<B>, Wrapped<Vec<B>> = W> + 'a,
-        <W as Functor<'a>>::Wrapped<Vec<B>>: Applicative<'a> + Monoid,
+        W: Applicative<'a, Unwrapped = Self::Wrapped<B>, Wrapped<Self::Wrapped<B>> = W>
+            + 'a
+            + Monoid,
+        <W as Functor<'a>>::Wrapped<Self::Wrapped<B>>: Applicative<'a> + Monoid,
+        <Self as Functor<'a>>::Wrapped<B>: 'a,
     {
         self.foldr(W::of(vec![]), |k, v| {
             let c = f(v);
@@ -33,6 +49,16 @@ impl<'a, A: Monoid> Traversable<'a> for Vec<A> {
             })
         })
     }
+
+    // fn sequenceA<B: 'a, W>(self) -> W::Wrapped<Self::Wrapped<B>>
+    // where
+    //     W: Applicative<'a, Unwrapped = Vec<B>, Wrapped<Vec<B>> = W> + 'a,
+    //     <W as Functor<'a>>::Wrapped<Vec<B>>: Applicative<'a> + Monoid,
+    //     <W as Functor<'a>>::Wrapped<B>: FromIterator<<W as Functor<'a>>::Wrapped<B>>,
+    //     Self::Unwrapped: IntoIterator<Item = W::Wrapped<B>> + Copy,
+    // {
+    //     self.traverse::<_, B, W>(|a| a.into_iter().collect::<W::Wrapped<B>>())
+    // }
 }
 
 #[cfg(test)]
@@ -58,4 +84,12 @@ mod test {
             a.traverse::<_, _, Option<Vec<i32>>>(|v| if *v > 2 { None } else { Option::Some(*v) });
         assert_eq!(None, result);
     }
+
+    // #[test]
+    // fn test_vec_option_sequence() {
+    //     let a = vec![Option::Some(1), Option::Some(2), Option::Some(3)];
+
+    //     let result = a.sequenceA::<_, Option<Vec<i32>>>();
+    //     assert_eq!(Option::Some(vec![1, 2, 3]), result);
+    // }
 }
