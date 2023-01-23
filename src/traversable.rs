@@ -5,8 +5,8 @@ use crate::{Applicative, Foldable, Functor, Monoid};
 /// running some action on each element in turn.
 /// Similar to applicatives, it can be used to do things like collecting some effects
 pub trait Traversable<'a>: Functor<'a> {
-    /// Convert elements to actions, and then evaluate the actions from left-to-right,
-    /// and accumulate the results.
+    /// Convert elements to actions, then evaluate the actions from left-to-right
+    /// and collect the results.
     ///
     /// Haskell signature
     /// traverse  :: Applicative f => (a -> f b) -> t a -> f (t b)
@@ -19,15 +19,18 @@ pub trait Traversable<'a>: Functor<'a> {
         <W as Functor<'a>>::Wrapped<Self::Wrapped<B>>: Applicative<'a>,
         <Self as Functor<'a>>::Wrapped<B>: 'a;
 
-    // ///
-    // /// Haskell signature
-    // /// sequenceA :: Applicative f => t (f a) -> f (t a)
-    // fn sequenceA<B: 'a, W>(self) -> W::Wrapped<Self::Wrapped<B>>
-    // where
-    //     W: Applicative<'a, Unwrapped = Vec<B>, Wrapped<Vec<B>> = W> + 'a,
-    //     <W as Functor<'a>>::Wrapped<Vec<B>>: Applicative<'a> + Monoid,
-    //     <W as Functor<'a>>::Wrapped<B>: FromIterator<<W as Functor<'a>>::Wrapped<B>>,
-    //     Self::Unwrapped: IntoIterator<Item = W::Wrapped<B>> + Copy;
+    /// Evaluate each action in the structure from left to right, and collect the results
+    ///
+    /// Haskell signature
+    /// sequenceA :: Applicative f => t (f a) -> f (t a)
+    fn sequence_a<B: 'a, W>(self) -> W::Wrapped<Self::Wrapped<B>>
+    where
+        W: Applicative<'a, Unwrapped = Self::Wrapped<B>, Wrapped<Self::Wrapped<B>> = W>
+            + 'a
+            + Monoid,
+        W: Applicative<'a, Wrapped<B> = Self::Unwrapped>,
+        <Self as Functor<'a>>::Wrapped<B>: 'a,
+        Self::Unwrapped: Applicative<'a> + 'a + Copy;
 }
 
 impl<'a, A: Monoid> Traversable<'a> for Vec<A> {
@@ -50,15 +53,17 @@ impl<'a, A: Monoid> Traversable<'a> for Vec<A> {
         })
     }
 
-    // fn sequenceA<B: 'a, W>(self) -> W::Wrapped<Self::Wrapped<B>>
-    // where
-    //     W: Applicative<'a, Unwrapped = Vec<B>, Wrapped<Vec<B>> = W> + 'a,
-    //     <W as Functor<'a>>::Wrapped<Vec<B>>: Applicative<'a> + Monoid,
-    //     <W as Functor<'a>>::Wrapped<B>: FromIterator<<W as Functor<'a>>::Wrapped<B>>,
-    //     Self::Unwrapped: IntoIterator<Item = W::Wrapped<B>> + Copy,
-    // {
-    //     self.traverse::<_, B, W>(|a| a.into_iter().collect::<W::Wrapped<B>>())
-    // }
+    fn sequence_a<B: 'a, W>(self) -> W::Wrapped<Self::Wrapped<B>>
+    where
+        W: Applicative<'a, Unwrapped = Self::Wrapped<B>, Wrapped<Self::Wrapped<B>> = W>
+            + 'a
+            + Monoid,
+        <Self as Functor<'a>>::Wrapped<B>: 'a,
+        W: Applicative<'a, Wrapped<B> = Self::Unwrapped>,
+        Self::Unwrapped: Applicative<'a> + 'a + Copy,
+    {
+        self.traverse::<_, B, W>(|a| *a)
+    }
 }
 
 #[cfg(test)]
@@ -69,7 +74,7 @@ mod test {
     fn test_vec_option_traverse() {
         let a = vec![1, 2, 3];
 
-        let result = a.traverse::<_, _, Option<Vec<String>>>(|v| Option::Some((*v).to_string()));
+        let result = a.traverse::<_, _, Option<_>>(|v| Option::Some((*v).to_string()));
         assert_eq!(
             Option::Some(vec!["1".to_string(), "2".to_string(), "3".to_string()]),
             result
@@ -81,15 +86,23 @@ mod test {
         let a = vec![1, 2, 3];
 
         let result =
-            a.traverse::<_, _, Option<Vec<i32>>>(|v| if *v > 2 { None } else { Option::Some(*v) });
+            a.traverse::<_, _, Option<_>>(|v| if *v > 2 { None } else { Option::Some(*v) });
         assert_eq!(None, result);
     }
 
-    // #[test]
-    // fn test_vec_option_sequence() {
-    //     let a = vec![Option::Some(1), Option::Some(2), Option::Some(3)];
+    #[test]
+    fn test_vec_option_sequence() {
+        let a = vec![Option::Some(1), Option::Some(2), Option::Some(3)];
 
-    //     let result = a.sequenceA::<_, Option<Vec<i32>>>();
-    //     assert_eq!(Option::Some(vec![1, 2, 3]), result);
-    // }
+        let result = a.sequence_a::<_, Option<_>>();
+        assert_eq!(Option::Some(vec![1, 2, 3]), result);
+    }
+
+    #[test]
+    fn test_vec_option_sequence_fail() {
+        let a = vec![Option::Some(1), None, Option::Some(3)];
+
+        let result = a.sequence_a::<_, Option<_>>();
+        assert_eq!(None, result);
+    }
 }
