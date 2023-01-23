@@ -26,3 +26,9 @@ impl<A> Monoid for Vec<A> {
         vec![]
     }
 }
+
+impl<A: Monoid> Monoid for Option<A> {
+    fn mempty() -> Self {
+        Option::None
+    }
+}

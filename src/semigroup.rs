@@ -1,3 +1,5 @@
+use crate::Monoid;
+
 /// A `Semigroup` is a type with an associative operation. In plain terms, this
 /// means you can take two values of this type and add them together into a
 /// different value of the same type. The most obvious example of this is
@@ -32,5 +34,11 @@ impl<A> Semigroup for Vec<A> {
     fn mappend(mut self, other: Self) -> Self {
         self.extend(other);
         self
+    }
+}
+
+impl<A: Monoid> Semigroup for Option<A> {
+    fn mappend(self, other: Self) -> Self {
+        self.and_then(|v| other.and_then(|v2| Some(v.mappend(v2))))
     }
 }

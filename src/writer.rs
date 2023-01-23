@@ -68,7 +68,7 @@ impl<'a, A, W: Monoid> Apply<'a> for Writer<A, W> {
 }
 
 impl<'a, A: 'a, W: Monoid> Applicative<'a> for Writer<A, W> {
-    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped> {
         Writer::new(value, W::mempty())
     }
 }

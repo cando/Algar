@@ -4,17 +4,17 @@ use crate::Apply;
 /// particular data type or "context".
 pub trait Applicative<'a>: Apply<'a> {
     /// Lift a value into a context
-    fn of<T: 'a>(value: T) -> Self::Wrapped<T>;
+    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped>;
 }
 
 impl<'a, A: 'a + Clone> Applicative<'a> for Option<A> {
-    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped> {
         Some(value)
     }
 }
 
 impl<'a, A: 'a + Clone, E> Applicative<'a> for Result<A, E> {
-    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped> {
         Result::Ok(value)
     }
 }

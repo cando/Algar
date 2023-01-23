@@ -79,7 +79,7 @@ impl<'a, S: 'a, A: 'a> Apply<'a> for State<'a, S, A> {
 }
 
 impl<'a, S: 'a, A: 'a> Applicative<'a> for State<'a, S, A> {
-    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+    fn of(value: Self::Unwrapped) -> Self::Wrapped<Self::Unwrapped> {
         State::new(|s| (value, s))
     }
 }
