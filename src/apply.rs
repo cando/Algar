@@ -39,7 +39,7 @@ impl<'a, A: Clone> Apply<'a> for Option<A> {
     where
         F: FnOnce(Self::Unwrapped, B) -> C,
     {
-        self.and_then(|a_u| b.and_then(|b_u| Some(f(a_u, b_u))))
+        self.and_then(|a_u| b.map(|b_u| f(a_u, b_u)))
     }
 }
 
@@ -55,7 +55,7 @@ impl<'a, A: Clone, E> Apply<'a> for Result<A, E> {
     where
         F: FnOnce(Self::Unwrapped, B) -> C,
     {
-        self.and_then(|a_u| b.and_then(|b_u| Result::Ok(f(a_u, b_u))))
+        self.and_then(|a_u| b.map(|b_u| f(a_u, b_u)))
     }
 }
 

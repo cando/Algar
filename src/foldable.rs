@@ -24,7 +24,7 @@ impl<A: Monoid> Foldable for Vec<A> {
     where
         F: Fn(B, &Self::Unwrapped) -> B,
     {
-        self.iter().rfold(init, |acc, a| folder(acc, &a))
+        self.iter().rfold(init, folder)
     }
 }
 

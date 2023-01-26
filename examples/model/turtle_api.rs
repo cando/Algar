@@ -13,7 +13,7 @@ pub enum TurtleError {
 pub fn r#move(turtle: Turtle, distance: &str) -> Result<Turtle, TurtleError> {
     Apply::lift_a2(
         Result::<Turtle, TurtleError>::of(turtle),
-        validate_distance(distance),
+        validate_distance(distance.to_string()),
         Turtle::r#move,
     )
 }
@@ -21,7 +21,7 @@ pub fn r#move(turtle: Turtle, distance: &str) -> Result<Turtle, TurtleError> {
 pub fn r#move2(turtle: Turtle, distance: &str) -> Result<((), Turtle), TurtleError> {
     Apply::lift_a2(
         Result::<Turtle, TurtleError>::of(turtle),
-        validate_distance(distance),
+        validate_distance(distance.to_string()),
         Turtle::r#move2,
     )
 }
@@ -29,7 +29,7 @@ pub fn r#move2(turtle: Turtle, distance: &str) -> Result<((), Turtle), TurtleErr
 pub fn turn(turtle: Turtle, angle: &str) -> Result<Turtle, TurtleError> {
     Apply::lift_a2(
         Result::<Turtle, TurtleError>::of(turtle),
-        validate_angle(angle),
+        validate_angle(angle.to_string()),
         Turtle::turn,
     )
 }
@@ -37,7 +37,7 @@ pub fn turn(turtle: Turtle, angle: &str) -> Result<Turtle, TurtleError> {
 pub fn turn2(turtle: Turtle, angle: &str) -> Result<((), Turtle), TurtleError> {
     Apply::lift_a2(
         Result::<Turtle, TurtleError>::of(turtle),
-        validate_angle(angle),
+        validate_angle(angle.to_string()),
         Turtle::turn2,
     )
 }
@@ -45,7 +45,7 @@ pub fn turn2(turtle: Turtle, angle: &str) -> Result<((), Turtle), TurtleError> {
 pub fn set_pen_color(turtle: Turtle, color: &str) -> Result<Turtle, TurtleError> {
     Apply::lift_a2(
         Result::<Turtle, TurtleError>::of(turtle),
-        validate_pen_color(color),
+        validate_pen_color(color.to_string()),
         Turtle::set_pen_color,
     )
 }
@@ -53,26 +53,26 @@ pub fn set_pen_color(turtle: Turtle, color: &str) -> Result<Turtle, TurtleError>
 pub fn set_pen_state(turtle: Turtle, state: &str) -> Result<Turtle, TurtleError> {
     Apply::lift_a2(
         Result::<Turtle, TurtleError>::of(turtle),
-        validate_pen_state(state),
+        validate_pen_state(state.to_string()),
         Turtle::set_pen_state,
     )
 }
 
-pub fn validate_distance(d: &str) -> Result<Distance, TurtleError> {
+pub fn validate_distance(d: String) -> Result<Distance, TurtleError> {
     match d.parse::<f32>() {
         Ok(v) => Result::Ok(Distance::new(v)),
         Err(_) => Result::Err(TurtleError::InvalidDistance),
     }
 }
 
-pub fn validate_angle(a: &str) -> Result<Angle, TurtleError> {
+pub fn validate_angle(a: String) -> Result<Angle, TurtleError> {
     match a.parse::<f32>() {
         Ok(v) => Result::Ok(Angle::new(v)),
         Err(_) => Result::Err(TurtleError::InvalidAngle),
     }
 }
 
-pub fn validate_pen_color(c: &str) -> Result<PenColor, TurtleError> {
+pub fn validate_pen_color(c: String) -> Result<PenColor, TurtleError> {
     match c.to_uppercase().as_str() {
         "RED" => Result::Ok(PenColor::Red),
         "BLACK" => Result::Ok(PenColor::Black),
@@ -80,7 +80,7 @@ pub fn validate_pen_color(c: &str) -> Result<PenColor, TurtleError> {
     }
 }
 
-pub fn validate_pen_state(s: &str) -> Result<PenState, TurtleError> {
+pub fn validate_pen_state(s: String) -> Result<PenState, TurtleError> {
     match s.to_uppercase().as_str() {
         "UP" => Result::Ok(PenState::Up),
         "DOWN" => Result::Ok(PenState::Down),

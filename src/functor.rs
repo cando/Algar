@@ -24,6 +24,7 @@ impl<'a, A> Functor<'a> for Option<A> {
     where
         F: Fn(Self::Unwrapped) -> B,
     {
+        #[allow(clippy::manual_map)]
         match self {
             Some(a) => Some(f(a)),
             None => None,

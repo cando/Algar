@@ -39,6 +39,6 @@ impl<A> Semigroup for Vec<A> {
 
 impl<A: Monoid> Semigroup for Option<A> {
     fn mappend(self, other: Self) -> Self {
-        self.and_then(|v| other.and_then(|v2| Some(v.mappend(v2))))
+        self.and_then(|v| other.map(|v2| v.mappend(v2)))
     }
 }
