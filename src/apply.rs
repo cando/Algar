@@ -27,35 +27,67 @@ pub trait Apply<'a>: Functor<'a> {
     // Some(f(a, b))
 }
 
-impl<'a, A: Clone> Apply<'a> for Option<A> {
+impl<'a, A> Apply<'a> for Option<A> {
     fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B + 'a,
     {
-        self.and_then(|x| f.fmap(|z| z(x.clone())))
+        match self {
+            Some(x) => match f {
+                Some(z) => Some(z(x)),
+                None => None,
+            },
+            None => None,
+        }
+
+        // self.and_then(|x| f.fmap(|z| z(x)))
     }
 
     fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
     where
         F: FnOnce(Self::Unwrapped, B) -> C,
     {
-        self.and_then(|a_u| b.map(|b_u| f(a_u, b_u)))
+        match self {
+            Some(x) => match b {
+                Some(y) => Some(f(x, y)),
+                None => None,
+            },
+            None => None,
+        }
+
+        // self.and_then(|a_u| b.map(|b_u| f(a_u, b_u)))
     }
 }
 
-impl<'a, A: Clone, E> Apply<'a> for Result<A, E> {
+impl<'a, A, E> Apply<'a> for Result<A, E> {
     fn ap<F, B: 'a>(self, f: Self::Wrapped<F>) -> Self::Wrapped<B>
     where
         F: FnOnce(Self::Unwrapped) -> B + 'a,
     {
-        self.and_then(|x| f.fmap(|z| z(x.clone())))
+        match self {
+            Result::Ok(x) => match f {
+                Result::Ok(z) => Result::Ok(z(x)),
+                Result::Err(e) => Result::Err(e),
+            },
+            Result::Err(e) => Result::Err(e),
+        }
+
+        // self.and_then(|x| f.fmap(|z| z(x)))
     }
 
     fn lift_a2<F, B: 'a, C: 'a>(self, b: Self::Wrapped<B>, f: F) -> Self::Wrapped<C>
     where
         F: FnOnce(Self::Unwrapped, B) -> C,
     {
-        self.and_then(|a_u| b.map(|b_u| f(a_u, b_u)))
+        match self {
+            Result::Ok(x) => match b {
+                Result::Ok(y) => Result::Ok(f(x, y)),
+                Result::Err(e) => Result::Err(e),
+            },
+            Result::Err(e) => Result::Err(e),
+        }
+
+        // self.and_then(|a_u| b.map(|b_u| f(a_u, b_u)))
     }
 }
 
