@@ -43,10 +43,12 @@ mod test {
     fn test_chaining_api_turtle_success() {
         let t = Turtle::default();
 
-        let new_t = turtle_api::turn(t, "90.0")
-            .bind(|t| turtle_api::r#move(t, "12.0"))
-            .bind(|t| turtle_api::set_pen_color(t, "RED"))
-            .bind(|t| turtle_api::set_pen_state(t, "DOWN"));
+        let new_t = turtle_api::turn(t, "90.0").bind(|t1| {
+            turtle_api::r#move(t1, "12.0").bind(|t2| {
+                turtle_api::set_pen_color(t2, "RED")
+                    .bind(|t3| turtle_api::set_pen_state(t3, "DOWN"))
+            })
+        });
 
         assert_eq!(
             new_t.unwrap(),
@@ -63,9 +65,9 @@ mod test {
     fn test_chaining_api_turtle_fail() {
         let t = Turtle::default();
 
-        let new_t = turtle_api::turn(t, "90.0")
-            .bind(|t| turtle_api::r#move(t, "NOT_VALID"))
-            .bind(|t| turtle_api::set_pen_color(t, "RED"));
+        let new_t = turtle_api::turn(t, "90.0").bind(|t1| {
+            turtle_api::r#move(t1, "NOT_VALID").bind(|t2| turtle_api::set_pen_color(t2, "RED"))
+        });
 
         assert!(new_t.is_err())
     }
@@ -75,9 +77,9 @@ mod test {
         let t = Turtle::default();
 
         let new_t = m! {
-            t <- turtle_api::turn(t, "90.0");
-            t <- turtle_api::r#move(t, "NOT_VALID");
-            turtle_api::set_pen_color(t, "RED")
+            t1 <- turtle_api::turn(t, "90.0");
+            t2 <- turtle_api::r#move(t1, "NOT_VALID");
+            turtle_api::set_pen_color(t2, "RED")
         };
 
         assert!(new_t.is_err())
