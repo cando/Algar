@@ -30,7 +30,12 @@ impl<'a, A> Monad<'a> for Option<A> {
     where
         F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
     {
-        self.and_then(f)
+        match self {
+            Some(x) => f(x),
+            None => None,
+        }
+
+        // self.and_then(f)
     }
 
     fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
@@ -46,7 +51,12 @@ impl<'a, A, E> Monad<'a> for Result<A, E> {
     where
         F: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
     {
-        self.and_then(f)
+        match self {
+            Result::Ok(x) => f(x),
+            Result::Err(e) => Result::Err(e),
+        }
+
+        // self.and_then(f)
     }
 
     fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
