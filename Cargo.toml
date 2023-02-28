@@ -16,3 +16,16 @@ keywords = ["category-theory", "fp", "monad", "monad-transformers", "functional"
 [[example]]
 name = "turtle_operations"
 test = true
+
+[[example]]
+name = "expr_step0"
+test = true
+
+[[example]]
+name = "expr_step1"
+test = true
+
+[[example]]
+name = "expr_step2"
+test = true
+

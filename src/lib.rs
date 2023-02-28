@@ -39,3 +39,5 @@ pub use crate::writer::Writer;
 mod trans;
 pub use crate::trans::ResultT;
 pub use crate::trans::StateT;
+
+mod free;
