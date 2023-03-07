@@ -21,18 +21,18 @@ pub enum MulExpr {
     Mul(Box<IntExpr>, Box<IntExpr>),
 }
 
-pub struct Expr(Either<IntExpr, MulExpr>);
+pub struct Expr(Coproduct<IntExpr, MulExpr>);
 
-pub enum Either<A, B> {
-    Inl(A),
-    Inr(B),
+pub enum Coproduct<A, B> {
+    L(A),
+    R(B),
 }
 
 impl Expr {
     fn eval(expr: Expr) -> i32 {
         match expr.0 {
-            Either::Inl(ie) => IntExpr::eval(ie),
-            Either::Inr(me) => match me {
+            Coproduct::L(ie) => IntExpr::eval(ie),
+            Coproduct::R(me) => match me {
                 MulExpr::Mul(x, y) => IntExpr::eval(*x) * IntExpr::eval(*y),
             },
         }
@@ -48,7 +48,7 @@ mod tests {
     #[test]
     fn simple_eval_expression() {
         // I can't add MulExpr inside IntExpr!!
-        let expr = Expr(Either::Inl(IntExpr::Add(
+        let expr = Expr(Coproduct::L(IntExpr::Add(
             Box::new(IntExpr::Val(2)),
             Box::new(IntExpr::Val(3)),
         )));

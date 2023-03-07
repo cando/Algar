@@ -24,6 +24,14 @@ impl Expr {
     }
 }
 
+pub fn int_val<E: From<Expr>>(value: i32) -> E {
+    E::from(Expr::Val(value))
+}
+
+pub fn add<E: From<Expr>>(lhs: Expr, rhs: Expr) -> E {
+    E::from(Expr::Add(Box::new(lhs), Box::new(rhs)))
+}
+
 fn main() {}
 
 #[cfg(test)]
@@ -32,21 +40,15 @@ mod tests {
 
     #[test]
     fn simple_eval_expression() {
-        let expr = Expr::Add(
-            Box::new(Expr::Add(Box::new(Expr::Val(2)), Box::new(Expr::Val(1)))),
-            Box::new(Expr::Val(5)),
-        );
+        let expr = add(int_val(1), int_val(2));
 
-        assert_eq!(8, Expr::eval(expr))
+        assert_eq!(3, Expr::eval(expr))
     }
 
     #[test]
     fn simple_render_expression() {
-        let expr = Expr::Add(
-            Box::new(Expr::Add(Box::new(Expr::Val(2)), Box::new(Expr::Val(1)))),
-            Box::new(Expr::Val(5)),
-        );
+        let expr = add(int_val(1), int_val(2));
 
-        assert_eq!("2 + 1 + 5", Expr::render(expr))
+        assert_eq!("1 + 2", Expr::render(expr))
     }
 }

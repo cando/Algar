@@ -29,3 +29,8 @@ test = true
 name = "expr_step2"
 test = true
 
+
+[[example]]
+name = "expr_step2b"
+test = true
+
