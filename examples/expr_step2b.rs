@@ -114,11 +114,12 @@ impl Expr {
         Self(Box::new(expr))
     }
 
-    fn fold<W, A: Debug>(&self, eval: W) -> A
+    fn fold<W, A>(&self, eval: W) -> A
     where
         W: Fn(Op<A>) -> A + Copy,
+        A: Debug,
     {
-        let folded = (*self.0).fmap(&|e: &Expr| e.fold::<W, A>(eval));
+        let folded = (*self.0).fmap(&|e| e.fold::<W, A>(eval));
         eval(folded)
     }
 }
