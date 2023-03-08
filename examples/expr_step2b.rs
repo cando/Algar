@@ -1,36 +1,49 @@
-use std::marker::PhantomData;
+use std::{fmt::Debug, marker::PhantomData};
 
 fn main() {}
 
-pub trait HKT<U> {
+pub trait HKT<U>: Debug {
     type Current;
     type Target;
 }
 
 pub trait Functor<B>: HKT<B> {
-    fn fmap(self, f: &dyn Fn(Self::Current) -> B) -> Self::Target;
+    fn fmap(&self, f: &dyn Fn(&Self::Current) -> B) -> Self::Target;
 }
 
 pub trait Expressable {}
 
 // This solution to expression problem is "Coproduct of Functors" (can be generalized to Free Monads???)
-impl Expressable for IntVal {}
+impl<A> Expressable for IntVal<A> {}
 impl<A> Expressable for Add<A> {}
-impl<'a, A, B, T> Expressable for Coproduct<'a, A, B, T> {}
+impl<A, B, T> Expressable for Coproduct<A, B, T> {}
 
 #[derive(Debug, PartialEq)]
-pub struct IntVal {
+pub struct IntVal<E> {
     value: i32,
+    _p: PhantomData<E>,
 }
 
-impl<U> HKT<U> for IntVal {
-    type Current = U;
-    type Target = IntVal;
+impl<E> IntVal<E> {
+    pub fn new(value: i32) -> Self {
+        Self {
+            value,
+            _p: PhantomData,
+        }
+    }
 }
 
-impl<B> Functor<B> for IntVal {
-    fn fmap(self, _f: &dyn Fn(Self::Current) -> B) -> Self::Target {
-        self
+impl<U, E: Debug> HKT<U> for IntVal<E> {
+    type Current = E;
+    type Target = IntVal<U>;
+}
+
+impl<U: Debug, E: Debug> Functor<U> for IntVal<E> {
+    fn fmap(&self, _f: &dyn Fn(&Self::Current) -> U) -> Self::Target {
+        IntVal {
+            value: self.value,
+            _p: PhantomData,
+        }
     }
 }
 
@@ -40,103 +53,73 @@ pub struct Add<E> {
     rhs: E,
 }
 
-impl<U, E> HKT<U> for Add<E> {
+impl<E> Add<E> {
+    pub fn new(lhs: E, rhs: E) -> Self {
+        Self { lhs, rhs }
+    }
+}
+
+impl<U: Debug, E: Debug> HKT<U> for Add<E> {
     type Current = E;
 
     type Target = Add<U>;
 }
 
-impl<U, E> Functor<U> for Add<E> {
-    fn fmap(self, f: &dyn Fn(Self::Current) -> U) -> Self::Target {
+impl<U: Debug, E: Debug> Functor<U> for Add<E> {
+    fn fmap(&self, f: &dyn Fn(&Self::Current) -> U) -> Self::Target {
         Add {
-            lhs: f(self.lhs),
-            rhs: f(self.rhs),
+            lhs: f(&self.lhs),
+            rhs: f(&self.rhs),
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Coproduct<'a, A, B, T> {
+pub enum Coproduct<A, B, T> {
     L(A),
     R(B),
-    P(PhantomData<&'a T>),
+    P(PhantomData<T>),
 }
 
-impl<'a, U: 'a, A, B, T: 'a> HKT<U> for Coproduct<'a, A, B, T>
+impl<U: Debug, A, B, T: Debug> HKT<U> for Coproduct<A, B, T>
 where
     A: Functor<T> + Functor<U>,
     B: Functor<T> + Functor<U>,
 {
     type Current = T;
-    type Target = Coproduct<'a, <A as HKT<U>>::Target, <B as HKT<U>>::Target, U>;
+    type Target = Coproduct<<A as HKT<U>>::Target, <B as HKT<U>>::Target, U>;
 }
 
-impl<'a, U: 'a, A, B, T: 'a> Functor<U> for Coproduct<'a, A, B, T>
+impl<U: Debug, A, B, T: Debug> Functor<U> for Coproduct<A, B, T>
 where
     A: Functor<T> + Functor<U> + HKT<U, Current = T>,
     B: Functor<T> + Functor<U> + HKT<U, Current = T>,
 {
-    fn fmap(self, f: &dyn Fn(Self::Current) -> U) -> Self::Target {
+    fn fmap(&self, f: &dyn Fn(&Self::Current) -> U) -> Self::Target {
         match self {
             Coproduct::L(l) => Coproduct::L(l.fmap(f)),
             Coproduct::R(r) => Coproduct::R(r.fmap(f)),
-            Coproduct::P(_) => todo!(),
+            Coproduct::P(_) => panic!(),
         }
     }
 }
 
-pub type Op<E> = Coproduct<'static, IntVal, Add<E>, E>;
+pub type Op<E> = Coproduct<IntVal<E>, Add<E>, E>;
 
 #[derive(Debug, PartialEq)]
 pub struct Expr(Box<Op<Expr>>);
 
-pub trait EvaluateInt {
-    fn eval(&self) -> i32;
-}
-
-impl EvaluateInt for IntVal {
-    fn eval(&self) -> i32 {
-        self.value
-    }
-}
-
-impl<E> EvaluateInt for Add<E>
-where
-    E: EvaluateInt,
-{
-    fn eval(&self) -> i32 {
-        self.lhs.eval() + self.rhs.eval()
-    }
-}
-
-impl<'a, A, B, T> EvaluateInt for Coproduct<'a, A, B, T>
-where
-    A: EvaluateInt + Functor<T>,
-    B: EvaluateInt + Functor<T>,
-{
-    fn eval(&self) -> i32 {
-        match self {
-            Coproduct::L(a) => a.eval(),
-            Coproduct::R(b) => b.eval(),
-            Coproduct::P(_) => todo!(),
-        }
-    }
-}
-
-impl<'a> EvaluateInt for Expr {
-    fn eval(&self) -> i32 {
-        self.0.eval()
-    }
-}
-
 impl Expr {
-    fn fold<W>(self, eval: W) -> Expr
-    where
-        W: Fn(&dyn EvaluateInt) -> Expr + Copy,
-    {
-        let expr = *self.0;
+    pub fn new(expr: Op<Expr>) -> Self {
+        Self(Box::new(expr))
+    }
 
-        eval(&expr.fmap(&|e: Expr| e.fold::<W>(eval)))
+    fn fold<W, A: Debug>(&self, eval: W) -> A
+    where
+        W: Fn(Op<A>) -> A + Copy,
+    {
+        let folded = (*self.0).fmap(&|e: &Expr| e.fold::<W, A>(eval));
+        eval(folded)
     }
 }
 
@@ -203,13 +186,27 @@ mod tests {
 
     #[test]
     fn simple_fold_expression() {
-        let expr = Expr(Box::new(Coproduct::R(Add {
-            lhs: Expr(Box::new(Coproduct::L(IntVal { value: 1 }))),
-            rhs: Expr(Box::new(Coproduct::L(IntVal { value: 2 }))),
-        })));
+        let expr = Expr::new(Coproduct::R(Add::new(
+            Expr::new(Coproduct::R(Add::new(
+                Expr::new(Coproduct::L(IntVal::new(42))),
+                Expr::new(Coproduct::L(IntVal::new(7))),
+            ))),
+            Expr::new(Coproduct::L(IntVal::new(2))),
+        )));
 
-        let a = expr.fold(|e| Expr(Box::new(Coproduct::L(IntVal { value: e.eval() }))));
-        assert_eq!(Expr(Box::new(Coproduct::L(IntVal { value: 3 }))), a)
+        let int_eval = expr.fold(|e| match e {
+            Coproduct::L(v) => v.value,
+            Coproduct::R(s) => s.lhs + s.rhs,
+            Coproduct::P(_) => panic!(),
+        });
+        assert_eq!(51, int_eval);
+
+        let string_eval = expr.fold(|e| match e {
+            Coproduct::L(v) => v.value.to_string(),
+            Coproduct::R(s) => format!("({} + {})", s.lhs, s.rhs),
+            Coproduct::P(_) => panic!(),
+        });
+        assert_eq!("((42 + 7) + 2)", string_eval);
     }
 
     // #[test]
