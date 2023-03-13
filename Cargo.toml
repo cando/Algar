@@ -18,19 +18,25 @@ name = "turtle_operations"
 test = true
 
 [[example]]
-name = "expr_step0"
+name = "0_expr_base"
 test = true
 
 [[example]]
-name = "expr_step1"
+name = "1_expr_base_b"
 test = true
 
 [[example]]
-name = "expr_step2"
+name = "2_expr_coproduct_of_functors"
 test = true
-
 
 [[example]]
-name = "expr_step2b"
+name = "3_expr_coproduct_of_functors_b"
 test = true
 
+[[example]]
+name = "4_expr_object_algebras"
+test = true
+
+[[example]]
+name = "5_expr_final_tagless"
+test = true

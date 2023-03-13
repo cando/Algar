@@ -2,6 +2,7 @@
 // data MulExpr = Mul IntExpr Intexpr
 // type Expr = Either IntExpr MulExpr
 // data Either a b = Inl a | Inr b
+#![allow(dead_code)]
 
 pub enum IntExpr {
     Val(i32),

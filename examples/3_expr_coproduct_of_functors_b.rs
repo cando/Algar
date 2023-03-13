@@ -1,6 +1,10 @@
+#![allow(dead_code)]
 use std::{fmt::Debug, marker::PhantomData};
 
 fn main() {}
+
+// This solution to expression problem is "Coproduct of Functors", with "real functors"
+// https://www.cambridge.org/core/journals/journal-of-functional-programming/article/data-types-a-la-carte/14416CB20C4637164EA9F77097909409
 
 pub trait HKT<U>: Debug {
     type Current;
@@ -10,13 +14,6 @@ pub trait HKT<U>: Debug {
 pub trait Functor<B>: HKT<B> {
     fn fmap(&self, f: &dyn Fn(&Self::Current) -> B) -> Self::Target;
 }
-
-pub trait Expressable {}
-
-// This solution to expression problem is "Coproduct of Functors" (can be generalized to Free Monads???)
-impl<A> Expressable for IntVal<A> {}
-impl<A> Expressable for Add<A> {}
-impl<A, B, T> Expressable for Coproduct<A, B, T> {}
 
 #[derive(Debug, PartialEq)]
 pub struct IntVal<E> {
@@ -123,63 +120,6 @@ impl Expr {
         eval(folded)
     }
 }
-
-// ---------------------------------------
-// We can now add another expression term!
-
-// pub struct Mul<E> {
-//     lhs: E,
-//     rhs: E,
-// }
-
-// pub type Op2<E> = Coproduct<'static, Mul<E>, Op<E>, E>;
-// pub struct Expr2(Box<Op2<Expr2>>);
-
-// ---------------------------------------------
-// And we can also easily add new operations
-
-// impl fmt::Display for IntVal {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(f, "{}", self.value)
-//     }
-// }
-
-// impl<E> fmt::Display for Add<E>
-// where
-//     E: fmt::Display,
-// {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(f, "({} + {})", self.lhs, self.rhs)
-//     }
-// }
-
-// impl<E> fmt::Display for Mul<E>
-// where
-//     E: fmt::Display,
-// {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(f, "({} * {})", self.lhs, self.rhs)
-//     }
-// }
-
-// impl<A, B> fmt::Display for Coproduct<A, B>
-// where
-//     A: fmt::Display,
-//     B: fmt::Display,
-// {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         match self {
-//             Coproduct::L(l) => write!(f, "{}", l),
-//             Coproduct::R(r) => write!(f, "{}", r),
-//         }
-//     }
-// }
-
-// impl fmt::Display for Expr2 {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(f, "{}", self.0)
-//     }
-// }
 
 #[cfg(test)]
 mod tests {

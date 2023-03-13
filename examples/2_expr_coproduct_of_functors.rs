@@ -2,25 +2,34 @@ use core::fmt;
 
 fn main() {}
 
-// This solution to expression problem is "Coproduct of Functors" (can be generalized to Free Monads???)
-// (Another is tagless final encoding)
-pub trait EvaluateInt {
-    fn eval(&self) -> i32;
-}
+// This solution to expression problem is "Coproduct of Functors", but in a Rust-like way
+// https://www.cambridge.org/core/journals/journal-of-functional-programming/article/data-types-a-la-carte/14416CB20C4637164EA9F77097909409
 
 pub struct IntVal {
     value: i32,
+}
+
+pub struct Add<E> {
+    lhs: E,
+    rhs: E,
+}
+
+pub enum Coproduct<A, B> {
+    L(A),
+    R(B),
+}
+
+pub type Op<E> = Coproduct<IntVal, Add<E>>;
+pub struct Expr(Box<Op<Expr>>);
+
+pub trait EvaluateInt {
+    fn eval(&self) -> i32;
 }
 
 impl EvaluateInt for IntVal {
     fn eval(&self) -> i32 {
         self.value
     }
-}
-
-pub struct Add<E> {
-    lhs: E,
-    rhs: E,
 }
 
 impl<E> EvaluateInt for Add<E>
@@ -31,12 +40,6 @@ where
         self.lhs.eval() + self.rhs.eval()
     }
 }
-
-pub enum Coproduct<A, B> {
-    L(A),
-    R(B),
-}
-
 impl<A, B> EvaluateInt for Coproduct<A, B>
 where
     A: EvaluateInt,
@@ -49,9 +52,6 @@ where
         }
     }
 }
-
-pub type Op<E> = Coproduct<IntVal, Add<E>>;
-pub struct Expr(Box<Op<Expr>>);
 
 impl EvaluateInt for Expr {
     fn eval(&self) -> i32 {
@@ -76,10 +76,10 @@ where
     }
 }
 
-pub type Op2<E> = Coproduct<Mul<E>, Op<E>>;
-pub struct Expr2(Box<Op2<Expr2>>);
+pub type OpMul<E> = Coproduct<Mul<E>, Op<E>>;
+pub struct MulExpr(Box<OpMul<MulExpr>>);
 
-impl EvaluateInt for Expr2 {
+impl EvaluateInt for MulExpr {
     fn eval(&self) -> i32 {
         self.0.eval()
     }
@@ -125,7 +125,7 @@ where
     }
 }
 
-impl fmt::Display for Expr2 {
+impl fmt::Display for MulExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -147,11 +147,11 @@ mod tests {
 
     #[test]
     fn mul_expression() {
-        let expr = Expr2(Box::new(Coproduct::R(Coproduct::R(Add {
-            lhs: Expr2(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 3 })))),
-            rhs: Expr2(Box::new(Coproduct::L(Mul {
-                lhs: Expr2(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 42 })))),
-                rhs: Expr2(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 2 })))),
+        let expr = MulExpr(Box::new(Coproduct::R(Coproduct::R(Add {
+            lhs: MulExpr(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 3 })))),
+            rhs: MulExpr(Box::new(Coproduct::L(Mul {
+                lhs: MulExpr(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 42 })))),
+                rhs: MulExpr(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 2 })))),
             }))),
         }))));
 
@@ -160,11 +160,11 @@ mod tests {
 
     #[test]
     fn render_expression() {
-        let expr = Expr2(Box::new(Coproduct::R(Coproduct::R(Add {
-            lhs: Expr2(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 3 })))),
-            rhs: Expr2(Box::new(Coproduct::L(Mul {
-                lhs: Expr2(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 42 })))),
-                rhs: Expr2(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 2 })))),
+        let expr = MulExpr(Box::new(Coproduct::R(Coproduct::R(Add {
+            lhs: MulExpr(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 3 })))),
+            rhs: MulExpr(Box::new(Coproduct::L(Mul {
+                lhs: MulExpr(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 42 })))),
+                rhs: MulExpr(Box::new(Coproduct::R(Coproduct::L(IntVal { value: 2 })))),
             }))),
         }))));
 

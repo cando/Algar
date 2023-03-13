@@ -2,6 +2,7 @@
 // eval :: Expr -> Int
 // eval (Val x) = x
 // eval (Add l r) = eval l + eval r
+#![allow(dead_code)]
 
 pub enum Expr {
     Val(i32),
