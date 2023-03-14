@@ -55,6 +55,24 @@ impl MulExpr for Render {
     }
 }
 
+// ----------------------------------------------------------------------------------------
+// Final tagless typechecks on operations (i can't mix bool and int)
+
+pub trait BoolExpr: Expr {
+    fn b(value: bool) -> Self::Repr<bool>;
+    fn and(lhs: Self::Repr<bool>, rhs: Self::Repr<bool>) -> Self::Repr<bool>;
+}
+
+impl BoolExpr for Render {
+    fn b(value: bool) -> Self::Repr<bool> {
+        format!("[{}]", value)
+    }
+
+    fn and(lhs: String, rhs: String) -> String {
+        format!("({} AND {})", lhs, rhs)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,6 +104,20 @@ mod tests {
         );
     }
 
+    fn make_complex_bool_expr<E>() -> E::Repr<bool>
+    where
+        E: BoolExpr,
+    {
+        return E::and(E::b(false), E::b(true));
+    }
+
+    // fn does_not_compile<E>() -> E::Repr<bool>
+    // where
+    //     E: BoolExpr,
+    // {
+    //     return E::and(E::i_val(12), E::b(true));
+    // }
+
     #[test]
     fn simple_expression() {
         let expr = make_simple_expr::<EvaluateInt>();
@@ -104,5 +136,12 @@ mod tests {
         let expr = make_complex_mul_expr::<Render>();
 
         assert_eq!("(((2 + 3) + 3) + (((2 + 3) + 3) + 12))", expr);
+    }
+
+    #[test]
+    fn handle_bool_expression() {
+        let expr = make_complex_bool_expr::<Render>();
+
+        assert_eq!("([false] AND [true])", expr);
     }
 }

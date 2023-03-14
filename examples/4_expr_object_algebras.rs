@@ -52,6 +52,23 @@ impl MulExpr<String> for Render {
     }
 }
 
+// But if we add another "type" to our abstraction?
+
+pub trait BoolExpr<E>: Expr<E> {
+    fn b(&self, value: bool) -> E;
+    fn and(&self, lhs: E, rhs: E) -> E;
+}
+
+impl BoolExpr<String> for Render {
+    fn b(&self, value: bool) -> String {
+        format!("[{}]", value)
+    }
+
+    fn and(&self, lhs: String, rhs: String) -> String {
+        format!("({} AND {})", lhs, rhs)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -74,6 +91,11 @@ mod tests {
         );
     }
 
+    // DOH! It compiles, but we are mixing boolean and integers!
+    fn make_mixed_expr<E>(expr: &dyn BoolExpr<E>) -> E {
+        return expr.add(expr.add(expr.b(false), expr.i_val(3)), expr.i_val(3));
+    }
+
     #[test]
     fn simple_expression() {
         let expr = make_simple_expr(&EvaluateInt {});
@@ -92,5 +114,13 @@ mod tests {
         let expr = make_complex_mul_expr(&Render {});
 
         assert_eq!("((((1 + 5) + 7) + 3) + 3)", expr);
+    }
+
+    #[test]
+    fn handle_mixed_wrong_expression_doh() {
+        let expr = make_mixed_expr(&Render {});
+
+        // What does this mean???? Let's try to improve it...Final tagless encoding!
+        assert_eq!("(([false] + 3) + 3)", expr);
     }
 }
