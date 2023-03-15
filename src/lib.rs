@@ -41,3 +41,4 @@ pub use crate::trans::ResultT;
 pub use crate::trans::StateT;
 
 mod free;
+pub use crate::free::Free;

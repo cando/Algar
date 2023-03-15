@@ -8,12 +8,12 @@ pub trait Functor<'a> {
     type Unwrapped;
 
     /// Target of the fmap operation. Like `Self`, but has a different wrapped up value underneath.
-    type Wrapped<B: 'a>: Functor<'a>;
+    type Wrapped<B: 'a>: Functor<'a, Unwrapped = B>;
 
     /// fmap is used to apply a function of type (a -> b) to a value of type f a, where f is a functor, to produce a value of type f b.
     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
-        F: Fn(Self::Unwrapped) -> B + 'a;
+        F: Fn(Self::Unwrapped) -> B + 'a + Copy;
 }
 
 impl<'a, A> Functor<'a> for Option<A> {
