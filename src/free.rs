@@ -1,28 +1,37 @@
-use crate::Functor;
+use crate::Monad;
 
 // data Free f a
 //   = Pure a
 //   | Free (f (Free f a))
 
+pub trait Functor0<'a> {
+    type Unwrapped;
+    type Wrapped<B: 'a>: Functor0<'a, Unwrapped = B>;
+
+    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnOnce(Self::Unwrapped) -> B + 'a;
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Free<'a, F, A: 'a>
 where
-    F: Functor<'a> + 'a,
+    F: Functor0<'a> + 'a,
 {
     Pure(A),
     Free(Box<F::Wrapped<Free<'a, F, A>>>),
 }
 
-impl<'a, F, A> Functor<'a> for Free<'a, F, A>
+impl<'a, F, A> Functor0<'a> for Free<'a, F, A>
 where
-    F: Functor<'a> + 'a,
+    F: Functor0<'a> + 'a,
 {
     type Unwrapped = A;
     type Wrapped<B: 'a> = Free<'a, F::Wrapped<Free<'a, F, A>>, B>;
 
     fn fmap<G, B: 'a>(self, f: G) -> Self::Wrapped<B>
     where
-        G: Fn(Self::Unwrapped) -> B + 'a + Copy,
+        G: FnOnce(Self::Unwrapped) -> B + 'a,
     {
         match self {
             Free::Pure(a) => Free::Pure(f(a)),
@@ -34,37 +43,64 @@ where
     }
 }
 
-fn lift_f<'a, F, A>(command: F) -> Free<'a, F, A>
+impl<'a, F, A> Monad<'a> for Free<'a, F, A>
 where
-    F: Functor<'a, Unwrapped = A>,
+    F: Functor0<'a> + 'a,
+{
+    type Unwrapped = A;
+    type Wrapped<T: 'a> = Free<'a, F::Wrapped<Free<'a, F, A>>, T>;
+
+    fn bind<E, B: 'a>(self, f: E) -> Self::Wrapped<B>
+    where
+        E: FnOnce(Self::Unwrapped) -> Self::Wrapped<B> + 'a,
+    {
+        // Pure a >>= f = f a
+        // Free m >>= f = Free ((>>= f) <$> m)
+        match self {
+            Free::Pure(a) => f(a),
+            Free::Free(m) => Free::Free(Box::new((*m).fmap(|a| a.bind(f)))),
+        }
+    }
+
+    fn of<T: 'a>(value: T) -> Self::Wrapped<T> {
+        Free::Pure(value)
+    }
+}
+
+pub fn lift_f<'a, F, A>(command: F) -> Free<'a, F, A>
+where
+    F: Functor0<'a, Unwrapped = A>,
 {
     // Free (fmap Pure command)
-    Free::Free(Box::new(command.fmap(Free::Pure)))
+    Free::Free(Box::new(command.fmap(|a| Free::Pure(a))))
 }
 
 #[cfg(test)]
 mod test {
 
-    use crate::{Free, Functor};
+    use std::fmt::Display;
 
-    use super::lift_f;
+    use crate::{m, Free, Monad};
+
+    use super::{lift_f, Functor0};
+
     pub enum KeyVal<'a, A> {
-        Get(String, Box<dyn 'a + Fn(String) -> A>),
-        Put(String, String, A),
+        Get(String, Box<dyn 'a + FnOnce(String) -> A>),
+        Put(String, String, Box<dyn 'a + FnOnce() -> A>),
     }
 
-    impl<'a, A: 'a> Functor<'a> for KeyVal<'a, A> {
+    impl<'a, A: 'a> Functor0<'a> for KeyVal<'a, A> {
         type Unwrapped = A;
 
         type Wrapped<B: 'a> = KeyVal<'a, B>;
 
         fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
         where
-            F: Fn(Self::Unwrapped) -> B + 'a,
+            F: FnOnce(Self::Unwrapped) -> B + 'a,
         {
             match self {
                 KeyVal::Get(k, cont) => KeyVal::Get(k, Box::new(move |s| f(cont(s)))),
-                KeyVal::Put(k, v, cont) => KeyVal::Put(k, v, f(cont)),
+                KeyVal::Put(k, v, cont) => KeyVal::Put(k, v, Box::new(|| f(cont()))),
             }
         }
     }
@@ -73,14 +109,14 @@ mod test {
     fn key_val_fmap() {
         let get_key_f = |s| lift_f(KeyVal::Get(s, Box::new(|a| a)));
 
-        let get_key_1 = get_key_f("1".to_owned());
+        let mut get_key_1 = get_key_f("1".to_owned());
 
-        match &get_key_1 {
+        match get_key_1 {
             Free::Pure(_) => panic!(),
-            Free::Free(f) => match &**f {
+            Free::Free(f) => match *f {
                 KeyVal::Get(k, next) => {
                     assert_eq!("1", k);
-                    match next(k.clone()) {
+                    match next(k) {
                         Free::Pure(v) => assert_eq!("1", v),
                         Free::Free(_) => panic!(),
                     }
@@ -90,6 +126,7 @@ mod test {
             },
         }
 
+        get_key_1 = get_key_f("1".to_owned());
         let get_key_mapped = get_key_1.fmap(|a| a.parse::<i32>().unwrap());
 
         match get_key_mapped {
@@ -103,6 +140,40 @@ mod test {
                     }
                 }
                 KeyVal::Put(_, _, _) => panic!(),
+            },
+        }
+    }
+
+    #[test]
+    fn key_val_bind_and_eval() {
+        let get_key_f = |s: &str| lift_f(KeyVal::Get(s.into(), Box::new(|a| a)));
+        let put_key_f =
+            |s: &str, v: &str| lift_f(KeyVal::Put(s.into(), v.into(), Box::new(|| "".into())));
+
+        let comp = m! {
+            put_key_f("1", "ue");
+            put_key_f("2", "my love");
+            a <- get_key_f("1");
+            Free::Pure(a)
+        };
+
+        // We have a computation that still has to execute! We can interpret as we want!
+
+        assert_eq!(
+            "Put 1,ue\nPut 2,my love\nGet 1\nreturn 1",
+            eval_to_string(comp)
+        );
+    }
+
+    fn eval_to_string<'a, A, R>(prog: Free<'a, KeyVal<'a, A>, R>) -> String
+    where
+        R: Display,
+    {
+        match prog {
+            Free::Pure(a) => format!("return {}", a),
+            Free::Free(m) => match *m {
+                KeyVal::Get(k, cont) => format!("Get {}\n{}", k.clone(), eval_to_string(cont(k))),
+                KeyVal::Put(k, v, cont) => format!("Put {},{}\n{}", k, v, eval_to_string(cont())),
             },
         }
     }

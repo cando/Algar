@@ -13,7 +13,7 @@ pub trait Functor<'a> {
     /// fmap is used to apply a function of type (a -> b) to a value of type f a, where f is a functor, to produce a value of type f b.
     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
     where
-        F: Fn(Self::Unwrapped) -> B + 'a + Copy;
+        F: Fn(Self::Unwrapped) -> B + 'a;
 }
 
 impl<'a, A> Functor<'a> for Option<A> {
