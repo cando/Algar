@@ -34,40 +34,76 @@ where
     }
 }
 
+fn lift_f<'a, F, A>(command: F) -> Free<'a, F, A>
+where
+    F: Functor<'a, Unwrapped = A>,
+{
+    // Free (fmap Pure command)
+    Free::Free(Box::new(command.fmap(Free::Pure)))
+}
+
 #[cfg(test)]
 mod test {
-    // use crate::{Free, Functor};
 
-    // pub enum KeyVal<'a, A> {
-    //     Get(String, &'a dyn Fn(String) -> A),
-    //     Put(String, String, A),
-    // }
+    use crate::{Free, Functor};
 
-    // impl<'a, A: 'a> Functor<'a> for KeyVal<'a, A> {
-    //     type Unwrapped = A;
+    use super::lift_f;
+    pub enum KeyVal<'a, A> {
+        Get(String, Box<dyn 'a + Fn(String) -> A>),
+        Put(String, String, A),
+    }
 
-    //     type Wrapped<B: 'a> = KeyVal<'a, B>;
+    impl<'a, A: 'a> Functor<'a> for KeyVal<'a, A> {
+        type Unwrapped = A;
 
-    //     fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
-    //     where
-    //         F: Fn(Self::Unwrapped) -> B + 'a + Copy,
-    //     {
-    //         match self {
-    //             KeyVal::Get(k, cont) => {
-    //                 let c = move |s| f(cont(s));
+        type Wrapped<B: 'a> = KeyVal<'a, B>;
 
-    //                 KeyVal::Get(k, &c)
-    //             }
-    //             KeyVal::Put(k, v, cont) => todo!(),
-    //         }
-    //     }
-    // }
+        fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
+        where
+            F: Fn(Self::Unwrapped) -> B + 'a,
+        {
+            match self {
+                KeyVal::Get(k, cont) => KeyVal::Get(k, Box::new(move |s| f(cont(s)))),
+                KeyVal::Put(k, v, cont) => KeyVal::Put(k, v, f(cont)),
+            }
+        }
+    }
 
     #[test]
-    fn free_option() {
-        // let a = Free::<Toy<String, ()>, Toy<String, ()>>::Pure(Toy::Done);
+    fn key_val_fmap() {
+        let get_key_f = |s| lift_f(KeyVal::Get(s, Box::new(|a| a)));
 
-        // let b: Free<Toy<_, _>, String> = a.fmap(|x| "done".to_string());
-        // dbg!(b);
+        let get_key_1 = get_key_f("1".to_owned());
+
+        match &get_key_1 {
+            Free::Pure(_) => panic!(),
+            Free::Free(f) => match &**f {
+                KeyVal::Get(k, next) => {
+                    assert_eq!("1", k);
+                    match next(k.clone()) {
+                        Free::Pure(v) => assert_eq!("1", v),
+                        Free::Free(_) => panic!(),
+                    }
+                }
+
+                KeyVal::Put(_, _, _) => panic!(),
+            },
+        }
+
+        let get_key_mapped = get_key_1.fmap(|a| a.parse::<i32>().unwrap());
+
+        match get_key_mapped {
+            Free::Pure(p) => assert_eq!(p, 1),
+            Free::Free(f) => match *f {
+                KeyVal::Get(k, next) => {
+                    assert_eq!("1", k);
+                    match next(k.clone()) {
+                        Free::Pure(v) => assert_eq!(1, v), // <------ String has been mapped to Int
+                        Free::Free(_) => panic!(),
+                    }
+                }
+                KeyVal::Put(_, _, _) => panic!(),
+            },
+        }
     }
 }
