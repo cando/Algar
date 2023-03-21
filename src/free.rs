@@ -78,43 +78,46 @@ where
 #[cfg(test)]
 mod test {
 
-    use std::fmt::Display;
+    use std::{collections::HashMap, fmt::Display};
 
-    use crate::{m, Free, Monad};
+    use crate::{m, Free, Free::Pure, Monad};
 
     use super::{lift_f, Functor0};
 
-    pub enum KeyVal<'a, A> {
+    pub enum KeyValF<'a, A> {
         Get(String, Box<dyn 'a + FnOnce(String) -> A>),
-        Put(String, String, Box<dyn 'a + FnOnce() -> A>),
+        Put(String, String, A),
     }
 
-    impl<'a, A: 'a> Functor0<'a> for KeyVal<'a, A> {
+    type KeyVal<'a, A> = Free<'a, KeyValF<'a, A>, A>;
+    type KeyValProg<'a, A> = Free<'a, KeyValF<'a, Free<'a, KeyValF<'a, A>, A>>, A>;
+
+    impl<'a, A: 'a> Functor0<'a> for KeyValF<'a, A> {
         type Unwrapped = A;
 
-        type Wrapped<B: 'a> = KeyVal<'a, B>;
+        type Wrapped<B: 'a> = KeyValF<'a, B>;
 
         fn fmap<F, B: 'a>(self, f: F) -> Self::Wrapped<B>
         where
             F: FnOnce(Self::Unwrapped) -> B + 'a,
         {
             match self {
-                KeyVal::Get(k, cont) => KeyVal::Get(k, Box::new(move |s| f(cont(s)))),
-                KeyVal::Put(k, v, cont) => KeyVal::Put(k, v, Box::new(|| f(cont()))),
+                KeyValF::Get(k, cont) => KeyValF::Get(k, Box::new(move |s| f(cont(s)))),
+                KeyValF::Put(k, v, cont) => KeyValF::Put(k, v, f(cont)),
             }
         }
     }
 
     #[test]
     fn key_val_fmap() {
-        let get_key_f = |s| lift_f(KeyVal::Get(s, Box::new(|a| a)));
+        let get_key_f = |s| lift_f(KeyValF::Get(s, Box::new(|a| a)));
 
         let mut get_key_1 = get_key_f("1".to_owned());
 
         match get_key_1 {
             Free::Pure(_) => panic!(),
             Free::Free(f) => match *f {
-                KeyVal::Get(k, next) => {
+                KeyValF::Get(k, next) => {
                     assert_eq!("1", k);
                     match next(k) {
                         Free::Pure(v) => assert_eq!("1", v),
@@ -122,7 +125,7 @@ mod test {
                     }
                 }
 
-                KeyVal::Put(_, _, _) => panic!(),
+                KeyValF::Put(_, _, _) => panic!(),
             },
         }
 
@@ -132,48 +135,82 @@ mod test {
         match get_key_mapped {
             Free::Pure(p) => assert_eq!(p, 1),
             Free::Free(f) => match *f {
-                KeyVal::Get(k, next) => {
+                KeyValF::Get(k, next) => {
                     assert_eq!("1", k);
                     match next(k.clone()) {
                         Free::Pure(v) => assert_eq!(1, v), // <------ String has been mapped to Int
                         Free::Free(_) => panic!(),
                     }
                 }
-                KeyVal::Put(_, _, _) => panic!(),
+                KeyValF::Put(_, _, _) => panic!(),
             },
+        }
+    }
+
+    fn prog<'a>() -> KeyValProg<'a, String> {
+        m! {
+            put_key("1", "ue");
+            put_key("2", "my love");
+            a <- get_key("2");
+            Pure(a)
         }
     }
 
     #[test]
     fn key_val_bind_and_eval() {
-        let get_key_f = |s: &str| lift_f(KeyVal::Get(s.into(), Box::new(|a| a)));
-        let put_key_f =
-            |s: &str, v: &str| lift_f(KeyVal::Put(s.into(), v.into(), Box::new(|| "".into())));
-
-        let comp = m! {
-            put_key_f("1", "ue");
-            put_key_f("2", "my love");
-            a <- get_key_f("1");
-            Free::Pure(a)
-        };
-
         // We have a computation that still has to execute! We can interpret as we want!
+        let _p = prog();
 
         assert_eq!(
-            "Put 1,ue\nPut 2,my love\nGet 1\nreturn 1",
-            eval_to_string(comp)
+            "Put 1,ue\nPut 2,my love\nGet 2\nreturn 2",
+            eval_to_string(prog())
+        );
+
+        assert_eq!(
+            "my love",
+            eval_real(prog(), &mut HashMap::<String, _>::new())
         );
     }
 
-    fn eval_to_string<'a, A, R>(prog: Free<'a, KeyVal<'a, A>, R>) -> String
+    fn get_key<'a>(key: &str) -> KeyVal<'a, String> {
+        lift_f(KeyValF::Get(key.into(), Box::new(|a| a)))
+    }
+
+    fn put_key<'a>(key: &str, val: &str) -> KeyVal<'a, String> {
+        lift_f(KeyValF::Put(key.into(), val.into(), String::new()))
+    }
+
+    fn eval_to_string<'a, A, R>(prog: Free<'a, KeyValF<'a, A>, R>) -> String
     where
         R: Display,
     {
         match prog {
             Free::Pure(a) => format!("return {}", a),
             Free::Free(m) => match *m {
-                KeyVal::Get(k, cont) => format!("Get {}\n{}", k.clone(), eval_to_string(cont(k))),
-                KeyVal::Put(k, v, cont) => format!("Put {},{}\n{}", k, v, eval_to_string(cont())),
+                KeyValF::Get(k, cont) => format!("Get {}\n{}", k.clone(), eval_to_string(cont(k))),
+                KeyValF::Put(k, v, cont) => format!("Put {},{}\n{}", k, v, eval_to_string(cont)),
+            },
+        }
+    }
+
+    fn eval_real<'a, A, R>(
+        prog: Free<'a, KeyValF<'a, A>, R>,
+        cache: &mut HashMap<String, String>,
+    ) -> R
+    where
+        R: Display,
+    {
+        match prog {
+            Free::Pure(a) => a,
+            Free::Free(m) => match *m {
+                KeyValF::Get(k, cont) => {
+                    let v = cache.get(&k).unwrap();
+                    eval_real(cont(v.clone()), cache)
+                }
+                KeyValF::Put(k, v, cont) => {
+                    let _v = cache.insert(k, v);
+                    eval_real(cont, cache)
+                }
             },
         }
     }
