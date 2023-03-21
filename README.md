@@ -13,8 +13,10 @@
 
 Algebric structures, higher-kinded types and other category theory bad ideas.
 
-Yes, you'll have generalized functors, applicatives, monads, traversable and much more in Rust at your fingertips. 
+Yes, you'll have generalized `functors`, `applicatives`, `monads`, `traversable`, `free monads` and much more in Rust at your fingertips. 
 But no, they're not as ergonomic and beautiful as in Haskell, mainly because of the lack of higher-kinded types in Rust type-system.
+
+In the examples section you'll also find my take on solving the expression problem in Rust: we start from a basic (wrong) implementation and then work towards a solution by trying to implement `coproduct of functors` and `final tagless encoding`.
 
 ## Why?
 
@@ -60,13 +62,15 @@ This library draws heavy inspiration from mathematics and other Rust and Elixir 
 
 The [`Witchcraft`](https://github.com/witchcrafters/witchcraft) Elixir library is why I started this journey.
 
-[`Fp-core.rs`](https://github.com/JasonShin/fp-core.rs) and [`higher`](https://github.com/bodil/higher)
-have been invaluable resources to help me to port category theory concepts in Rust. 
-
 [`The Fantasy Land Spec`](https://github.com/fantasyland/fantasy-land) is a spec for
 projects such as this one, but targeted at Javascript. It does not come with its
 own implementation, but provides a [helpful chart](https://github.com/fantasyland/fantasy-land/raw/master/figures/dependencies.png)
 of class hierarchies.
+
+The Scala [`Cats`](https://typelevel.org/cats/) library is well documented and exceptionally enlightening on some concepts of category theory.
+
+[`Fp-core.rs`](https://github.com/JasonShin/fp-core.rs) and [`higher`](https://github.com/bodil/higher)
+have been invaluable resources to help me to port category theory concepts in Rust. 
 
 Obviously the Haskell [`Prelude`](https://hackage.haskell.org/package/base-4.10.0.0/docs/Prelude.html)
 deserves mention. Haskell has inspired so many programmers to write clean,

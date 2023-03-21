@@ -8,15 +8,6 @@
 ///
 use crate::Monad;
 
-pub trait Functor0<'a> {
-    type Unwrapped;
-    type Wrapped<B: 'a>: Functor0<'a, Unwrapped = B>;
-
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
-    where
-        F: FnOnce(Self::Unwrapped) -> B + 'a;
-}
-
 /// From https://hackage.haskell.org/package/free-5.2/docs/Control-Monad-Free.html
 ///
 /// data Free f a
@@ -24,15 +15,25 @@ pub trait Functor0<'a> {
 ///   | Free (f (Free f a))
 pub enum Free<'a, F, A: 'a>
 where
-    F: Functor0<'a> + 'a,
+    F: FunctorOnce<'a> + 'a,
 {
     Pure(A),
     Free(Box<F::Wrapped<Free<'a, F, A>>>),
 }
 
-impl<'a, F, A> Functor0<'a> for Free<'a, F, A>
+// Here we do not reuse the generic `Functor` trait since we need a FnOnce fmap operation to avoid lifetime-hell in recursive Free structure
+pub trait FunctorOnce<'a> {
+    type Unwrapped;
+    type Wrapped<B: 'a>: FunctorOnce<'a, Unwrapped = B>;
+
+    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnOnce(Self::Unwrapped) -> B + 'a;
+}
+
+impl<'a, F, A> FunctorOnce<'a> for Free<'a, F, A>
 where
-    F: Functor0<'a> + 'a,
+    F: FunctorOnce<'a> + 'a,
 {
     type Unwrapped = A;
     type Wrapped<B: 'a> = Free<'a, F::Wrapped<Free<'a, F, A>>, B>;
@@ -53,7 +54,7 @@ where
 
 impl<'a, F, A> Monad<'a> for Free<'a, F, A>
 where
-    F: Functor0<'a> + 'a,
+    F: FunctorOnce<'a> + 'a,
 {
     type Unwrapped = A;
     type Wrapped<T: 'a> = Free<'a, F::Wrapped<Free<'a, F, A>>, T>;
@@ -78,7 +79,7 @@ where
 #[allow(unused)]
 pub fn lift_f<'a, F, A>(command: F) -> Free<'a, F, A>
 where
-    F: Functor0<'a, Unwrapped = A>,
+    F: FunctorOnce<'a, Unwrapped = A>,
 {
     // Free (fmap Pure command)
     Free::Free(Box::new(command.fmap(|a| Free::Pure(a))))
@@ -91,7 +92,7 @@ mod test {
 
     use crate::{m, Free, Free::Pure, Monad};
 
-    use super::{lift_f, Functor0};
+    use super::{lift_f, FunctorOnce};
 
     pub enum KeyValF<'a, A> {
         Get(String, Box<dyn 'a + FnOnce(String) -> A>),
@@ -101,7 +102,7 @@ mod test {
     type KeyVal<'a, A> = Free<'a, KeyValF<'a, A>, A>;
     type KeyValProg<'a, A> = Free<'a, KeyValF<'a, Free<'a, KeyValF<'a, A>, A>>, A>;
 
-    impl<'a, A: 'a> Functor0<'a> for KeyValF<'a, A> {
+    impl<'a, A: 'a> FunctorOnce<'a> for KeyValF<'a, A> {
         type Unwrapped = A;
 
         type Wrapped<B: 'a> = KeyValF<'a, B>;

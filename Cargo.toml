@@ -2,12 +2,12 @@
 name = "algar"
 authors = ["Stefano Candori <stefano.candori@prima.it>"]
 description = "Algebraic structures, higher-kinded types and other category theory bad ideas"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/cando/Algar"
 homepage = "https://github.com/cando/Algar"
-keywords = ["category-theory", "fp", "monad", "monad-transformers", "functional"]
+keywords = ["category-theory", "monad", "monad-transformers", "tagless", "free-monads"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,28 +15,35 @@ keywords = ["category-theory", "fp", "monad", "monad-transformers", "functional"
 
 [[example]]
 name = "turtle_operations"
+path = "examples/turtle/turtle_operations.rs"
 test = true
 
 [[example]]
 name = "0_expr_base"
+path = "examples/expression_problem/0_expr_base.rs"
 test = true
 
 [[example]]
 name = "1_expr_base_b"
+path = "examples/expression_problem/1_expr_base_b.rs"
 test = true
 
 [[example]]
 name = "2_expr_coproduct_of_functors"
+path = "examples/expression_problem/2_expr_coproduct_of_functors.rs"
 test = true
 
 [[example]]
 name = "3_expr_coproduct_of_functors_b"
+path = "examples/expression_problem/3_expr_coproduct_of_functors_b.rs"
 test = true
 
 [[example]]
 name = "4_expr_object_algebras"
+path = "examples/expression_problem/4_expr_object_algebras.rs"
 test = true
 
 [[example]]
 name = "5_expr_final_tagless"
+path = "examples/expression_problem/5_expr_final_tagless.rs"
 test = true
