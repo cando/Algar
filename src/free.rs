@@ -1,8 +1,12 @@
+/// A free monad is a construction which allows you to build a monad from any Functor.
+/// Like other monads, it is a pure way to represent and manipulate computations.
+/// In particular, free monads provide a practical way to:
+///
+/// * represent stateful computations as data, and run them
+/// * build an embedded DSL (domain-specific language)
+/// * run a computation using multiple different interpreters
+///
 use crate::Monad;
-
-// data Free f a
-//   = Pure a
-//   | Free (f (Free f a))
 
 pub trait Functor0<'a> {
     type Unwrapped;
@@ -13,7 +17,11 @@ pub trait Functor0<'a> {
         F: FnOnce(Self::Unwrapped) -> B + 'a;
 }
 
-#[derive(Debug, PartialEq)]
+/// From https://hackage.haskell.org/package/free-5.2/docs/Control-Monad-Free.html
+///
+/// data Free f a
+///   = Pure a
+///   | Free (f (Free f a))
 pub enum Free<'a, F, A: 'a>
 where
     F: Functor0<'a> + 'a,
@@ -67,6 +75,7 @@ where
     }
 }
 
+#[allow(unused)]
 pub fn lift_f<'a, F, A>(command: F) -> Free<'a, F, A>
 where
     F: Functor0<'a, Unwrapped = A>,
