@@ -14,6 +14,7 @@ pub use crate::monoid::Monoid;
 
 mod functor;
 pub use crate::functor::Functor;
+pub use crate::functor::FunctorOnce;
 
 mod apply;
 pub use crate::apply::Apply;

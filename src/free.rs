@@ -1,34 +1,27 @@
-/// A free monad is a construction which allows you to build a monad from any Functor.
+use crate::{FunctorOnce, Monad};
+
+/// A free monad is a construction which allows you to build a `Monad` from any `Functor`.
 /// Like other monads, it is a pure way to represent and manipulate computations.
+///
 /// In particular, free monads provide a practical way to:
 ///
 /// * represent stateful computations as data, and run them
 /// * build an embedded DSL (domain-specific language)
 /// * run a computation using multiple different interpreters
 ///
-use crate::Monad;
-
-/// From https://hackage.haskell.org/package/free-5.2/docs/Control-Monad-Free.html
+/// Haskell definition from <https://hackage.haskell.org/package/free-5.2/docs/Control-Monad-Free.html>
 ///
+/// ```haskell
 /// data Free f a
 ///   = Pure a
 ///   | Free (f (Free f a))
+/// ```
 pub enum Free<'a, F, A: 'a>
 where
     F: FunctorOnce<'a> + 'a,
 {
     Pure(A),
     Free(Box<F::Wrapped<Free<'a, F, A>>>),
-}
-
-// Here we do not reuse the generic `Functor` trait since we need a FnOnce fmap operation to avoid lifetime-hell in recursive Free structure
-pub trait FunctorOnce<'a> {
-    type Unwrapped;
-    type Wrapped<B: 'a>: FunctorOnce<'a, Unwrapped = B>;
-
-    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
-    where
-        F: FnOnce(Self::Unwrapped) -> B + 'a;
 }
 
 impl<'a, F, A> FunctorOnce<'a> for Free<'a, F, A>

@@ -16,6 +16,16 @@ pub trait Functor<'a> {
         F: Fn(Self::Unwrapped) -> B + 'a;
 }
 
+/// A `Functor` trait where the `fmap` operation is a `FnOnce` instead of an `Fn`.
+pub trait FunctorOnce<'a> {
+    type Unwrapped;
+    type Wrapped<B: 'a>: FunctorOnce<'a, Unwrapped = B>;
+
+    fn fmap<F, B>(self, f: F) -> Self::Wrapped<B>
+    where
+        F: FnOnce(Self::Unwrapped) -> B + 'a;
+}
+
 impl<'a, A> Functor<'a> for Option<A> {
     type Unwrapped = A;
     type Wrapped<B: 'a> = Option<B>;
