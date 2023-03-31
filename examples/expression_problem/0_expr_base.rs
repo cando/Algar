@@ -9,19 +9,17 @@ pub enum Expr {
     Add(Box<Expr>, Box<Expr>),
 }
 
-impl Expr {
-    fn eval(expr: Expr) -> i32 {
-        match expr {
-            Expr::Val(i) => i,
-            Expr::Add(x, y) => Self::eval(*x) + Self::eval(*y),
-        }
+fn eval(expr: Expr) -> i32 {
+    match expr {
+        Expr::Val(i) => i,
+        Expr::Add(x, y) => eval(*x) + eval(*y),
     }
+}
 
-    fn render(expr: Expr) -> String {
-        match expr {
-            Expr::Val(i) => i.to_string(),
-            Expr::Add(x, y) => format!("{} + {}", Self::render(*x), Self::render(*y)),
-        }
+fn render(expr: Expr) -> String {
+    match expr {
+        Expr::Val(i) => i.to_string(),
+        Expr::Add(x, y) => format!("{} + {}", render(*x), render(*y)),
     }
 }
 
@@ -43,13 +41,13 @@ mod tests {
     fn simple_eval_expression() {
         let expr = add(int_val(1), int_val(2));
 
-        assert_eq!(3, Expr::eval(expr))
+        assert_eq!(3, eval(expr))
     }
 
     #[test]
     fn simple_render_expression() {
         let expr = add(int_val(1), int_val(2));
 
-        assert_eq!("1 + 2", Expr::render(expr))
+        assert_eq!("1 + 2", render(expr))
     }
 }

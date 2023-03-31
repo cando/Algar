@@ -48,11 +48,16 @@ mod tests {
 
     #[test]
     fn simple_eval_expression() {
-        // I can't add MulExpr inside IntExpr!!
         let expr = Expr(Coproduct::L(IntExpr::Add(
             Box::new(IntExpr::Val(2)),
             Box::new(IntExpr::Val(3)),
         )));
+
+        // I can't add MulExpr inside IntExpr!! ((1 * 2) + 3)
+        // let mul_expr = Expr(Coproduct::L(IntExpr::Add(
+        //     Box::new(MulExpr::Mul(IntExpr::Val(1), IntExpr::Val(2))),
+        //     Box::new(IntExpr::Val(3)),
+        // )));
 
         assert_eq!(5, Expr::eval(expr))
     }

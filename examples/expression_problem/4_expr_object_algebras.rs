@@ -48,7 +48,7 @@ impl MulExpr<i32> for EvaluateInt {
 
 impl MulExpr<String> for Render {
     fn mul(&self, lhs: String, rhs: String) -> String {
-        format!("({} + {})", lhs, rhs)
+        format!("({} * {})", lhs, rhs)
     }
 }
 
@@ -113,7 +113,7 @@ mod tests {
     fn handle_mul_expression() {
         let expr = make_complex_mul_expr(&Render {});
 
-        assert_eq!("((((1 + 5) + 7) + 3) + 3)", expr);
+        assert_eq!("((((1 + 5) * 7) + 3) * 3)", expr);
     }
 
     #[test]

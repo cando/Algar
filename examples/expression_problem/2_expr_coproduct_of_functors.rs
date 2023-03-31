@@ -20,6 +20,7 @@ pub enum Coproduct<A, B> {
 }
 
 pub type Op<E> = Coproduct<IntVal, Add<E>>;
+
 pub struct Expr(Box<Op<Expr>>);
 
 pub trait EvaluateInt {
